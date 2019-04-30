@@ -189,6 +189,11 @@ public class SimulationSerializer {
 		var path = PathToSimulationSave(name);
 		var contents = File.ReadAllText(path);
 
+		LoadSimulationFromContents(name, contents, creatureBuilder, evolution);
+	}
+
+	public static void LoadSimulationFromContents(string name, string contents, CreatureBuilder creatureBuilder, Evolution evolution) {
+
 		var lineEndings = contents.Contains("\r\n") ? "\r\n" : "\n";
 		var splitOptions = new SplitOptions(lineEndings);
 			
