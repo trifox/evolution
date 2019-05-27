@@ -1,10 +1,18 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using Keiwando.Evolution.Scenes;
 
 public class BestCreaturesController : MonoBehaviour {
+
+	#region Events
+
+	public event Action PlaybackDidBegin;
+
+	#endregion
 
 	[SerializeField] new private CameraFollowScript camera;
 
@@ -31,15 +39,21 @@ public class BestCreaturesController : MonoBehaviour {
 	public int AutoplayDuration { get; set; }
 
 	private Coroutine autoplayRoutine;
+	private Coroutine playbackRoutine;
 
 	private Evolution evolution;
 
+	private UnityEngine.SceneManagement.Scene playbackScene;
+	private PhysicsScene physicsScene;
+
 	void Start () {
+
+		Physics.autoSimulation = false;
 
 		evolution = FindObjectOfType<Evolution>();
 
-		AutoplayEnabled = true;
 		AutoplayDuration = 10;
+		AutoplayEnabled = true;
 
 		evolution.InitializationDidEnd += delegate () {
 			AutoplayDuration = evolution.Settings.SimulationTime;
@@ -52,55 +66,70 @@ public class BestCreaturesController : MonoBehaviour {
 		};
 	}
 
-	public void RefreshMuscleContractionVisibility(bool visible) {
-		if (CurrentBest != null) 
-			CurrentBest.RefreshMuscleContractionVisibility(visible);
+	void FixedUpdate() {
+		if (physicsScene != null && physicsScene.IsValid()) {
+			physicsScene.Simulate(Time.fixedDeltaTime);
+		}
 	}
 
 	public void ShowBestCreature(int generation) {
+		
+		if (this.playbackRoutine != null) 
+			StopCoroutine(this.playbackRoutine);
+		this.playbackRoutine = StartCoroutine(StartPlayback(generation));
+	}
+
+	public IEnumerator StartPlayback(int generation) {
 
 		var lastSimulatedGeneration = evolution.SimulationData.BestCreatures.Count;
 		if (generation < 1 || generation > lastSimulatedGeneration) {
 			Debug.LogError(string.Format("Attempted to show invalid generation: {0}. Simulated up to {1}", generation, lastSimulatedGeneration));
-			return;
+			yield break;
 		}
-		
+
+		if (this.playbackScene != null && this.playbackScene.IsValid()) {
+			yield return SceneController.UnloadAsync(this.playbackScene);
+		}
+
+		this.CurrentGeneration = generation;
+
+		var sceneLoadConfig = new SceneController.SimulationSceneLoadConfig(
+			this.evolution.SimulationData.CreatureDesign,
+			1,
+			this.evolution.SimulationData.SceneDescription,
+			SceneController.SimulationSceneType.BestCreatures
+		);
+		var context = new SceneController.SimulationSceneLoadContext();
+		var sceneContext = new PlaybackSceneContext(this.evolution.SimulationData, this);
+
+		yield return SceneController.LoadSimulationScene(sceneLoadConfig, context, sceneContext);
+		this.physicsScene = context.PhysicsScene;
+		this.playbackScene = context.Scene;
+
 		var chromosome = evolution.SimulationData.BestCreatures[generation - 1].Chromosome;
-		SpawnCreature(chromosome);
+		this.CurrentBest = context.Creatures[0];
+		evolution.ApplyBrain(this.CurrentBest, chromosome);
+		// TODO: Set Obstacle if needed
+
+		camera.toFollow = this.CurrentBest;
+		
+		this.CurrentBest.SetOnBestCreatureLayer();
+
+		this.CurrentBest.Alive = false;
+		this.CurrentBest.gameObject.SetActive(false);
+
+		this.CurrentBest.Alive = true;
+		this.CurrentBest.gameObject.SetActive(true);
+
 		AutoPlay();
 
-		CurrentGeneration = generation;
-	}
-
-	private void SpawnCreature(string chromosome) {
-
-		GameObject obstacle = null;
-
-		if (CurrentBest != null) {
-			obstacle = CurrentBest.Obstacle;
-			Destroy(CurrentBest.gameObject);
-		}
-
-		var creature = evolution.CreateCreature();
-		evolution.ApplyBrain(creature, chromosome);
-		creature.Obstacle = obstacle;
-	
-		camera.toFollow = creature;
-		this.CurrentBest = creature;
-
-		creature.SetOnBestCreatureLayer();
-
-		// THIS IS NEEDED! DO NOT REMOVE! IMPORTANT!
-		creature.Alive = false;
-		creature.gameObject.SetActive(false);
-
-		creature.Alive = true;
-		creature.gameObject.SetActive(true);
+		if (PlaybackDidBegin != null) PlaybackDidBegin();
 	}
 
 	private void AutoPlay() {
 
 		StopAutoPlay();
+		if (this.CurrentBest == null) return;
 		if (!AutoplayEnabled) return;
 
 		autoplayRoutine = StartCoroutine(ShowNextGenerationAfterTime(AutoplayDuration));
@@ -111,7 +140,7 @@ public class BestCreaturesController : MonoBehaviour {
 		yield return new WaitForSeconds(time);
 
 		// Check to see if the next generation has been simulated yet,
-		// otherwise wait for 1 / 3 of time again.
+		// otherwise wait for a shorter period of time again.
 		while (!GenerationHasBeenSimulated(CurrentGeneration + 1)) {
 			// yield return new WaitForSeconds(time / 3);
 			yield return new WaitForSeconds(time / 30.0f);
@@ -121,11 +150,17 @@ public class BestCreaturesController : MonoBehaviour {
 	}
 
 	private void StopAutoPlay() {
-		
+
 		if (autoplayRoutine != null) StopCoroutine(autoplayRoutine);
 	}
 
 	private bool GenerationHasBeenSimulated(int generation) {
+
 		return generation > 0 && generation <= evolution.SimulationData.BestCreatures.Count;
+	}
+
+	public void RefreshMuscleContractionVisibility(bool visible) {
+		if (CurrentBest != null) 
+			CurrentBest.RefreshMuscleContractionVisibility(visible);
 	}
 }

@@ -48,6 +48,8 @@ public class Creature : MonoBehaviour {
 	}
 	private GameObject obstacle;
 
+	public PhysicsScene PhysicsScene { get; set; }
+
 	private static LayerMask groundLayerMask = 1 << 9; //LayerMask.NameToLayer("Ground");
 
 	private float maxJumpingHeight;
@@ -59,8 +61,10 @@ public class Creature : MonoBehaviour {
 	void Update () {
 
 		//maxJumpingHeight = Mathf.Max(maxJumpingHeight, DistanceFromGround());
-		maxJumpingHeight = Mathf.Max(maxJumpingHeight, DistanceFromFlatFloor());
 
+		if (Alive) {
+			maxJumpingHeight = Mathf.Max(maxJumpingHeight, DistanceFromFlatFloor());
+		}
 		//currentLowest = GetLowestPoint();
 	}
 
@@ -178,12 +182,11 @@ public class Creature : MonoBehaviour {
 	public float DistanceFromGround() {
 		RaycastHit hit;
 
-		if (Physics.Raycast(GetLowestPoint(), Vector3.down, out hit, Mathf.Infinity, groundLayerMask)) {
-			
-			if (hit.collider.gameObject.CompareTag("Ground")) {
-				return hit.distance;
-			}
+		if (PhysicsScene.Raycast(GetLowestPoint(), Vector3.down, out hit, Mathf.Infinity, groundLayerMask)) {
+			return hit.distance;
 		}
+
+		Debug.Log(hit.distance);
 
 		return 0f;
 	}
@@ -455,10 +458,6 @@ public class Creature : MonoBehaviour {
 		for (int i = 0; i < muscles.Count; i++) {
 			muscles[i].RemoveCollider();
 		}
-	}
-
-	void OnDestroy() {
-		//print("Creature script destroyed");
 	}
 }
 

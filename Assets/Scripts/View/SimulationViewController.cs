@@ -5,6 +5,7 @@ using System.Text;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using Keiwando.Evolution.UI;
 
 public class SimulationViewController : MonoBehaviour, 
 										IEvolutionOverlayViewDelegate, 
@@ -26,6 +27,8 @@ public class SimulationViewController : MonoBehaviour,
 	[SerializeField] private BestCreaturesOverlayView bestCreatureOverlayView;
 	[SerializeField] private SharedSimulationOverlayView sharedOverlayView;
 
+	[SerializeField] private V2PlaybackNoticeOverlayView v2PlaybackNoticePopup;
+
     [SerializeField] private Camera simulationCamera;
     [SerializeField] private Camera bestCreatureCamera;
 
@@ -43,6 +46,17 @@ public class SimulationViewController : MonoBehaviour,
 
 		evolution.NewBatchDidBegin += delegate () {
 			Refresh();
+		};
+
+		bestCreatureController.PlaybackDidBegin += delegate () {
+			Refresh();
+		};
+
+		evolution.InitializationDidEnd += delegate () {
+			if (!Settings.DontShowV2SimulationDeprecationOverlayAgain 
+			&& evolution.SimulationData.LastV2SimulatedGeneration > 0) {
+				v2PlaybackNoticePopup.Show();
+			}
 		};
 	}
 
@@ -102,6 +116,10 @@ public class SimulationViewController : MonoBehaviour,
 		return evolution.AutoSaver.Enabled;
 	}
 
+	public bool IsPlaybackPossiblyInaccurate(SharedSimulationOverlayView view) {
+		return (evolution.SimulationData?.LastV2SimulatedGeneration ?? 0) > 0;
+	}
+
     public void PauseButtonClicked(SharedSimulationOverlayView view) {
 		Pause();
 	}
@@ -112,6 +130,10 @@ public class SimulationViewController : MonoBehaviour,
 
     public void SaveButtonClicked(SharedSimulationOverlayView view) {
 		SaveSimulation();
+	}
+
+	public void InaccuratePlaybackButtonClicked(SharedSimulationOverlayView view) {
+		v2PlaybackNoticePopup.Show(true);
 	}
     
     public void AutosaveToggled(SharedSimulationOverlayView view, bool autosaveEnabled) {
@@ -231,7 +253,7 @@ public class SimulationViewController : MonoBehaviour,
 
     public int GetNumberOfNetworkInputs(BestCreaturesOverlayView view) {
         if (bestCreatureController.CurrentBest != null) {
-            return bestCreatureController.CurrentBest.brain.NUMBER_OF_INPUTS;
+            return bestCreatureController.CurrentBest.brain.NumberOfInputs;
         }
         // TODO: Improve this implementation
         return 0;

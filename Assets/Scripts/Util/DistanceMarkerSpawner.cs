@@ -1,42 +1,69 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Keiwando.Evolution.Scenes;
 
-public class DistanceMarkerSpawner: MonoBehaviour {
+namespace Keiwando.Evolution {
 
-    private const int INITIAL_SPAWN_COUNT = 100;
-    private const float MARKER_DISTANCE = 5f;
-    private const float STAT_ADJUSTMENT_FACTOR = 5f;
+    public class DistanceMarkerSpawner: MonoBehaviour {
 
-    [SerializeField]
-    private Transform spawnPosition;
+        private const int INITIAL_SPAWN_COUNT = 100;
+        private const float STAT_ADJUSTMENT_FACTOR = 5f;
 
-    [SerializeField]
-    private DistanceMarker template;
+        public float MarkerDistance { get; set; } = 5f;
+        public float DistanceAngleFactor { get; set; } = 1f;
 
-    private List<DistanceMarker> allMarkers = new List<DistanceMarker>();
+        public ISceneContext Context { get; set; }
 
-    void Start() {
-        Spawn();
-    }
+        [SerializeField]
+        private DistanceMarker template;
+        [SerializeField]
+        private DistanceMarker bestMarkerTemplate;
 
-    public void Spawn() {
+        private List<DistanceMarker> allMarkers = new List<DistanceMarker>();
 
-        template.gameObject.SetActive(true);
-        template.GetComponent<MeshRenderer>().sortingOrder = 30;
-        var pos = template.transform.position;
-        // Push the markers into the background
-        pos.z = 3;
-        var spawnX = spawnPosition.transform.position.x;
-
-        // Create markers
-        for (float i = 1; i <= INITIAL_SPAWN_COUNT; i++) {
-            var dX = i * MARKER_DISTANCE;
-            pos.x = (dX * STAT_ADJUSTMENT_FACTOR) + spawnX;
-            var newMarker = Instantiate(template, pos, Quaternion.identity, template.transform.parent);
-            newMarker.Text.text = dX.ToString("0");
-            allMarkers.Add(newMarker);
+        void Start() {
+            Spawn();
         }
 
-        template.gameObject.SetActive(false);
+        public void Spawn() {
+
+            template.gameObject.SetActive(true);
+            template.GetComponent<MeshRenderer>().sortingOrder = 30;
+            
+            var pos = transform.position;
+            // Push the markers into the background
+            pos.z = 3;
+            // TODO: Add factor to distance calculation
+            // Create markers
+            for (int i = 1; i <= INITIAL_SPAWN_COUNT; i++) {
+                pos += transform.right * MarkerDistance * STAT_ADJUSTMENT_FACTOR;
+                var labelValue = i * MarkerDistance * DistanceAngleFactor;
+                AddMarker(template, pos, labelValue.ToString("0"));
+            }
+
+            // Create marker for best of previous gen
+            var prevBestDistance = Context != null ? Context.GetDistanceOfBest(Context.GetCurrentGeneration() - 1) : float.NaN;
+            if (!float.IsNaN(prevBestDistance)) {
+                var actualDistance = prevBestDistance / (STAT_ADJUSTMENT_FACTOR * DistanceAngleFactor);
+                var bestLabelPos = transform.position + (prevBestDistance * transform.right);
+                var rotationEulerAngle = transform.eulerAngles.z + 90f;
+                var marker = AddMarker(bestMarkerTemplate, bestLabelPos, actualDistance.ToString("0"), rotationEulerAngle);
+                marker.Text.text = "---  ";
+                marker.Text.color = new Color(0.23f, 0.23f, 0.23f, 0.36f);
+            }
+
+            template.gameObject.SetActive(false);
+            bestMarkerTemplate.gameObject.SetActive(false);
+        }
+
+        private DistanceMarker AddMarker(DistanceMarker template, Vector3 pos, string label, float rotation = 0) {
+
+            var newMarker = Instantiate(template, pos, Quaternion.Euler(0, 0, rotation), template.transform.parent);
+            newMarker.Text.text = label;
+            newMarker.gameObject.layer = this.gameObject.layer;
+            allMarkers.Add(newMarker);
+            return newMarker;
+        }
     }
 }
+

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Keiwando.Evolution.Scenes;
 
 public class CreatureEditor: MonoBehaviour {
 
@@ -44,6 +45,9 @@ public class CreatureEditor: MonoBehaviour {
         foreach (var configContainer in simulationConfigs) {
             Destroy(configContainer);
         }
+
+        // DEBUG:
+        // Instantiate(Resources.Load("Prefabs/Structures/Ground"), new Vector3(0, 0, 10f), Quaternion.identity);
     }
 
     void Update() {
@@ -100,9 +104,12 @@ public class CreatureEditor: MonoBehaviour {
         // Don't start the simulation if the creature design is empty
         if (creatureDesign.IsEmpty) return;
 
+        var sceneDescription = DefaultSimulationScenes.DefaultSceneForTask(editorState.SimulationSettings.Task);
+        
         var simulationData = new SimulationData(editorState.SimulationSettings, 
                                                 editorState.NeuralNetworkSettings,
-                                                creatureDesign);
+                                                creatureDesign,
+                                                sceneDescription);
         StartSimulation(simulationData);
     }
 
@@ -115,7 +122,7 @@ public class CreatureEditor: MonoBehaviour {
         DontDestroyOnLoad(containerObject);
         
         // Load simulation scene
-        SceneController.LoadSync(SceneController.Scene.Simulation);
+        SceneController.LoadSync(SceneController.Scene.SimulationContainer);
     }   
 
     #region State Management
@@ -276,12 +283,12 @@ public class CreatureEditor: MonoBehaviour {
         } 
 
         // TODO: Remove
-        else if (input.GetKeyDown(KeyCode.P)) {
-            Debug.Log(historyManager.GetDebugState());
-        }
-        else if (input.GetKeyDown(KeyCode.Q)) {
-            Debug.Log(GetState().CreatureDesign.GetDebugDescription());
-        }
+        // else if (input.GetKeyDown(KeyCode.P)) {
+        //     Debug.Log(historyManager.GetDebugState());
+        // }
+        // else if (input.GetKeyDown(KeyCode.Q)) {
+        //     Debug.Log(GetState().CreatureDesign.GetDebugDescription());
+        // }
 
         viewController.Refresh();
     }
