@@ -5,29 +5,24 @@ using System.Collections.Generic;
 
 public class Muscle : BodyComponent {
 
+	public struct Defaults {
+		public static float MaxForce = 1500f;
+	}
+
 	private const string MATERIAL_PATH = "Materials/MuscleMaterial2";
 	private const string BLUE_MATERIAL_PATH = "Materials/MuscleMaterialBlue";
+	private const string INVISIBLE_MATERIAL_PATH = "Materials/MuscleMaterialInvisible";
 
 	public enum MuscleAction {
 		CONTRACT, EXPAND	
 	}
 
+	public MuscleData MuscleData { get; set; }
+
 	public MuscleAction muscleAction;
 
 	public MuscleJoint startingJoint;
 	public MuscleJoint endingJoint;
-
-//	public Vector3 startingPoint {
-//		get {
-//			return startingJoint.position;
-//		}
-//	}
-//
-//	public Vector3 endingPoint {
-//		get {
-//			return endingJoint.position;
-//		}	
-//	}
 
 	private SpringJoint spring;
 
@@ -45,8 +40,7 @@ public class Muscle : BodyComponent {
 		set {
 			_living = value;
 			if (_living) {
-				ShouldShowContraction = PlayerPrefs.GetInt(PlayerPrefsKeys.SHOW_MUSCLE_CONTRACTION, 0) == 1;
-				//print("Should show contraction");
+				ShouldShowContraction = Settings.ShowMuscleContraction;
 			}
 		}
 		get { return _living; }
@@ -80,6 +74,7 @@ public class Muscle : BodyComponent {
 	// MARK: contraction visibility
 	private Material redMaterial;
 	private Material blueMaterial;
+	private Material invisibleMaterial;
 
 	private float minLineWidth = 0.5f;
 	private float maxLineWidth = 1.5f;
@@ -87,11 +82,11 @@ public class Muscle : BodyComponent {
 	private Vector3 resetPosition;
 	private Quaternion resetRotation;
 
-	public static Muscle Create() {
-		ID_COUNTER++;
+	public static Muscle CreateFromData(MuscleData data) {
 
 		Material muscleMaterial = Resources.Load(MATERIAL_PATH) as Material;
 		Material blueMaterial = Resources.Load(BLUE_MATERIAL_PATH) as Material;
+		Material invisibleMaterial = Resources.Load(INVISIBLE_MATERIAL_PATH) as Material;
 
 		GameObject muscleEmpty = new GameObject();
 		muscleEmpty.name = "Muscle";
@@ -99,48 +94,12 @@ public class Muscle : BodyComponent {
 		var muscle = muscleEmpty.AddComponent<Muscle>();
 		muscle.AddLineRenderer();
 		muscle.SetMaterial(muscleMaterial);
-		muscle.ID = ID_COUNTER;
+
+		muscle.MuscleData = data;
 
 		muscle.redMaterial = muscleMaterial;
 		muscle.blueMaterial = blueMaterial;
-
-		return muscle;
-	}
-
-	public static Muscle CreateFromString(string data, List<Bone> bones) {
-
-		var muscleID = 0;
-		var startID = 0;
-		var endID = 0;
-
-		var parts = data.Split('%');
-		try {
-			muscleID = int.Parse(parts[0]);
-			startID = int.Parse(parts[1]);
-			endID = int.Parse(parts[2]);
-		
-		} catch (System.FormatException e) {
-
-			Debug.Log(string.Format("x{0}x", data));
-			throw e;
-		}
-
-		var muscle = Muscle.Create();
-		muscle.ID = muscleID;
-		ID_COUNTER = Mathf.Max(ID_COUNTER - 1, muscle.ID);	// ID_COUNTER - 1 because the counter gets increased on Create()
-
-		foreach (var bone in bones) {
-			if(bone.ID == startID) {
-				muscle.startingJoint = bone.muscleJoint;
-			} else if (bone.ID == endID) {
-				muscle.endingJoint = bone.muscleJoint;
-			}
-		}
-
-		muscle.ConnectToJoints();
-		muscle.UpdateLinePoints();
-
-		muscle.AddCollider();
+		muscle.invisibleMaterial = invisibleMaterial;
 
 		return muscle;
 	}
@@ -165,12 +124,6 @@ public class Muscle : BodyComponent {
 
 		UpdateLinePoints();
 		UpdateContractionVisibility();
-
-//		if (muscleAction == MuscleAction.CONTRACT) {
-//			Contract();
-//		} else {
-//			Expand();	
-//		}
 	}
 
 	void FixedUpdate() {
@@ -254,7 +207,6 @@ public class Muscle : BodyComponent {
 	public void Contract() {
 
 		if (living) {
-
 			Contract(currentForce);
 		}
 	}
@@ -277,7 +229,6 @@ public class Muscle : BodyComponent {
 	public void Expand() {
 
 		if (living) {
-
 			Expand(currentForce);
 		}
 	}
@@ -308,16 +259,9 @@ public class Muscle : BodyComponent {
 
 //		startingJoint.GetComponent<FixedJoint>().connectedBody.AddForceAtPosition(startingForce ,startingJoint.position);
 //		endingJoint.GetComponent<FixedJoint>().connectedBody.AddForceAtPosition(endingForce, endingJoint.position);
-
+		
 		startingJoint.ConnectedBone.AddForceAtPosition(startingForce, startingJoint.transform.position);
 		endingJoint.ConnectedBone.AddForceAtPosition(endingForce, endingJoint.transform.position);
-	}
-
-	private void TestContraction () {
-		if (living) {
-
-			Contract(currentForce);
-		}
 	}
 
 	IEnumerator ExpandAfterTime(float time)
@@ -341,6 +285,10 @@ public class Muscle : BodyComponent {
 		//lineRenderer.SetWidth(LINE_WIDTH, LINE_WIDTH); // Deprecated
 		lineRenderer.startWidth = LINE_WIDTH;
 		lineRenderer.endWidth = LINE_WIDTH;
+		lineRenderer.receiveShadows = false;
+		lineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+		lineRenderer.allowOcclusionWhenDynamic = false;
+		lineRenderer.sortingOrder = -1;
 
 		lineRenderer.generateLightingData = true;
 	}
@@ -389,13 +337,20 @@ public class Muscle : BodyComponent {
 	}
 
 	public void RemoveCollider() {
-		Destroy(GetComponent<Rigidbody>());
-		Destroy(GetComponent<BoxCollider>());
+		DestroyImmediate(GetComponent<Rigidbody>());
+		DestroyImmediate(GetComponent<BoxCollider>());
 		//Destroy(this._body);
 		//Destroy(this._collider);
 	}
 
 	private void UpdateContractionVisibility() {
+
+		if (!_living) return;
+
+		if (!Settings.ShowMuscles) {
+			SetInvisibleMaterial();
+			return;
+		}
 
 		if (!ShouldShowContraction) { return; }
 
@@ -426,6 +381,12 @@ public class Muscle : BodyComponent {
 		
 		if (blueMaterial == null) blueMaterial = Resources.Load(BLUE_MATERIAL_PATH) as Material;
 		lineRenderer.material = blueMaterial;
+	}
+
+	private void SetInvisibleMaterial() {
+		
+		if (invisibleMaterial == null) invisibleMaterial = Resources.Load(INVISIBLE_MATERIAL_PATH) as Material;
+		lineRenderer.material = invisibleMaterial;
 	}
 
 	private void SetLineWidth(float width) {
@@ -469,9 +430,10 @@ public class Muscle : BodyComponent {
 		living = true;
 	}
 
+	// TODO: Remove this
 	public override string GetSaveString () {
 		
-		return string.Format("{0}%{1}%{2}", ID, startingJoint.ID, endingJoint.ID);
+		return string.Format("{0}%{1}%{2}", MuscleData.id, MuscleData.startBoneID, MuscleData.endBoneID);
 	}
 
 	/** Deletes the muscle gameobject and the springjoint. */

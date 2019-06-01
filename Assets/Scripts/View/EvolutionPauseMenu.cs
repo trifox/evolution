@@ -9,30 +9,29 @@ public class EvolutionPauseMenu : MonoBehaviour {
 	private Evolution evolution;
 
 	// Keep best creatures
-	[SerializeField] private Toggle keepBestCreaturesToggle;
+	[SerializeField] 
+	private Toggle keepBestCreaturesToggle;
 
 	// Batch simulation
-	[SerializeField] private InputField batchSizeInput;
-	[SerializeField] private Toggle batchSizeToggle;
+	[SerializeField] 
+	private InputField batchSizeInput;
+	[SerializeField] 
+	private Toggle batchSizeToggle;
 
 	// Simulation Time
-	[SerializeField] private InputField simulationTimeInput;
+	[SerializeField] 
+	private InputField simulationTimeInput;
 
 	// Mutation rate
-	[SerializeField] private InputField mutationRateInput;
-
-	private float evolutionTimescale = 1.0f;
+	[SerializeField] 
+	private InputField mutationRateInput;
 
 	// Use this for initialization
 	void Start () {
 
-		FindEvolution();
+		evolution = FindObjectOfType<Evolution>();
 
 		Setup();
-	}
-
-	private void FindEvolution() {
-		evolution = GameObject.FindGameObjectWithTag("Evolution").GetComponent<Evolution>();
 	}
 
 	private void Setup() {
@@ -42,14 +41,14 @@ public class EvolutionPauseMenu : MonoBehaviour {
 		// Evolution settings
 		var settings = evolution.Settings;
 
-		keepBestCreaturesToggle.isOn = settings.keepBestCreatures;
+		keepBestCreaturesToggle.isOn = settings.KeepBestCreatures;
 
-		BatchSizeToggled(settings.simulateInBatches);
-		batchSizeToggle.isOn = settings.simulateInBatches;
+		BatchSizeToggled(settings.SimulateInBatches);
+		batchSizeToggle.isOn = settings.SimulateInBatches;
 
-		batchSizeInput.text = settings.batchSize.ToString();
-		simulationTimeInput.text = settings.simulationTime.ToString();
-		mutationRateInput.text = settings.mutationRate.ToString();
+		batchSizeInput.text = settings.BatchSize.ToString();
+		simulationTimeInput.text = settings.SimulationTime.ToString();
+		mutationRateInput.text = settings.MutationRate.ToString();
 	}
 
 	private void SetupInputCallbacks() {
@@ -78,23 +77,19 @@ public class EvolutionPauseMenu : MonoBehaviour {
 	public void Pause() {
 		this.gameObject.SetActive(true);
 
-		if (evolution == null) FindEvolution();
-
-		evolutionTimescale = evolution.TimeScale;
-		evolution.TimeScale = 0;
+		Time.timeScale = 0;
 	}
 
 	public void Continue() {
 		this.gameObject.SetActive(false);
-
-		if (evolution == null) FindEvolution();
-
-		evolution.TimeScale = evolutionTimescale;
+		Time.timeScale = 1f;
 	}
 
 	public void KeepBestCreaturesToggled(bool value) {
 		
-		evolution.Settings.keepBestCreatures = value;
+		var settings = evolution.Settings;
+		settings.KeepBestCreatures = value;
+		evolution.Settings = settings;
 	}
 
 	private void SimulationTimeChanged() {
@@ -102,10 +97,12 @@ public class EvolutionPauseMenu : MonoBehaviour {
 		var time = Mathf.Clamp(Int32.Parse(simulationTimeInput.text), 1, 100000);
 		simulationTimeInput.text = time.ToString();
 
-		/*var settings = LoadEvolutionSettings();
+		/*var settings = LoadSimulationSettings();
 		settings.simulationTime = time;
-		SaveEvolutionSettings(settings);*/
-		evolution.Settings.simulationTime = time;
+		SaveSimulationSettings(settings);*/
+		var settings = evolution.Settings;
+		settings.SimulationTime = time;
+		evolution.Settings = settings;
 	}
 
 	private void MutationRateChanged() {
@@ -113,11 +110,13 @@ public class EvolutionPauseMenu : MonoBehaviour {
 		var rate = Mathf.Clamp(int.Parse(mutationRateInput.text), 1, 100);
 		mutationRateInput.text = rate.ToString();
 
-		/*var settings = LoadEvolutionSettings();
+		/*var settings = LoadSimulationSettings();
 		settings.mutationRate = rate;
-		SaveEvolutionSettings(settings);*/
+		SaveSimulationSettings(settings);*/
 
-		evolution.Settings.mutationRate = rate;
+		var settings = evolution.Settings;
+		settings.MutationRate = rate;
+		evolution.Settings = settings;
 	}
 
 	private void BatchSizeChanged() {
@@ -125,17 +124,19 @@ public class EvolutionPauseMenu : MonoBehaviour {
 		var batchSize = ClampBatchSize(Int32.Parse(batchSizeInput.text));
 		batchSizeInput.text = batchSize.ToString();
 
-		/*var settings = LoadEvolutionSettings();
+		/*var settings = LoadSimulationSettings();
 		settings.batchSize = batchSize;
-		SaveEvolutionSettings(settings);*/
+		SaveSimulationSettings(settings);*/
 
-		evolution.Settings.batchSize = batchSize;
+		var settings = evolution.Settings;
+		settings.BatchSize = batchSize;
+		evolution.Settings = settings;
 	}
 
 	private int ClampBatchSize(int size) {
 
 		//var populationSize = Mathf.Clamp(Int32.Parse(populationSizeInput.text), 2, 10000000);
-		var populationSize = evolution.Settings.populationSize;
+		var populationSize = evolution.Settings.PopulationSize;
 
 		return Mathf.Clamp(size, 1, populationSize);
 	}
@@ -145,10 +146,12 @@ public class EvolutionPauseMenu : MonoBehaviour {
 		//PlayerPrefs.SetInt(BATCH_SIMULATION_ENABLED_KEY, val ? 1 : 0);
 		batchSizeInput.gameObject.SetActive(val);
 
-		/*var settings = LoadEvolutionSettings();
+		/*var settings = LoadSimulationSettings();
 		settings.simulateInBatches = val;
-		SaveEvolutionSettings(settings);*/
+		SaveSimulationSettings(settings);*/
 
-		evolution.Settings.simulateInBatches = val;
+		var settings = evolution.Settings;
+		settings.SimulateInBatches = val;
+		evolution.Settings = settings;
 	}
 }

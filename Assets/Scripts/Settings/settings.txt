@@ -1,6 +1,0 @@
-bool DidMigrateCreatureSaves = false
-bool DidMigrateSimulationSaves = false
-
-string CreatureNames (_CreatureNames)
-string CurrentCreatureName
-string CurrentCreatureDesign

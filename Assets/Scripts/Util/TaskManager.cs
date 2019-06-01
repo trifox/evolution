@@ -21,18 +21,20 @@ public class TaskManager : MonoBehaviour {
 	void Start () {
 
 		evolution = GameObject.FindGameObjectWithTag("Evolution").GetComponent<Evolution>();
-
-		SetupTask();
+		SetupRunningTask();
+		evolution.InitializationDidEnd += delegate () {
+			SetupTask();
+		};
 	}
 
 	private void SetupTask() {
 
-		switch(evolution.Settings.task) {
+		switch(evolution.Settings.Task) {
 			
-		case EvolutionTask.RUNNING: SetupRunningTask(); break;
-		case EvolutionTask.JUMPING: SetupJumpingTask(); break;
-		case EvolutionTask.OBSTACLE_JUMP: SetupObstacleJumpingTask(); break;
-		case EvolutionTask.CLIMBING: SetupClimbingTask(); break;
+		case EvolutionTask.Running: SetupRunningTask(); break;
+		case EvolutionTask.Jumping: SetupJumpingTask(); break;
+		case EvolutionTask.ObstacleJump: SetupObstacleJumpingTask(); break;
+		case EvolutionTask.Climbing: SetupClimbingTask(); break;
 		}
 	}
 

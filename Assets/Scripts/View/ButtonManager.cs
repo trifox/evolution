@@ -7,54 +7,53 @@ using System.Collections.Generic;
 public class ButtonManager : MonoBehaviour {
 
 	[SerializeField]	
-	private CreatureBuilder creatureBuilder;
+	private CreatureEditor editor;
 
 	[SerializeField] private SelectableButton jointButton;
 	[SerializeField] private SelectableButton boneButton;
 	[SerializeField] private SelectableButton muscleButton;
 	[SerializeField] private SelectableButton moveButton;
+	[SerializeField] private SelectableButton selectButton;
 	[SerializeField] private SelectableButton deleteButton;
 
-	private Dictionary<SelectableButton, CreatureBuilder.BuildSelection> buttonMap;
-	private SelectableButton selectedButton;
+	private Dictionary<SelectableButton, CreatureEditor.Tool> buttonMap = 
+		new Dictionary<SelectableButton, CreatureEditor.Tool>();
 
 	void Start() {
 
-		buttonMap = new Dictionary<SelectableButton, CreatureBuilder.BuildSelection>();
-
-		buttonMap.Add(jointButton, CreatureBuilder.BuildSelection.Joint);
-		buttonMap.Add(boneButton, CreatureBuilder.BuildSelection.Bone);
-		buttonMap.Add(muscleButton, CreatureBuilder.BuildSelection.Muscle);
-		buttonMap.Add(deleteButton, CreatureBuilder.BuildSelection.Delete);
-		buttonMap.Add(moveButton, CreatureBuilder.BuildSelection.Move);
+		buttonMap.Add(jointButton, CreatureEditor.Tool.Joint);
+		buttonMap.Add(boneButton, CreatureEditor.Tool.Bone);
+		buttonMap.Add(muscleButton, CreatureEditor.Tool.Muscle);
+		buttonMap.Add(deleteButton, CreatureEditor.Tool.Delete);
+		buttonMap.Add(moveButton, CreatureEditor.Tool.Move);
+		buttonMap.Add(selectButton, CreatureEditor.Tool.Select);
 
 		foreach (SelectableButton button in buttonMap.Keys) {
 			button.manager = this;
+		}
+
+		Refresh();
+	}
+
+	public void Refresh() {
+
+		var advancedMode = ((EditorMode)Settings.EditorMode) == EditorMode.Advanced;
+		selectButton.gameObject.SetActive(advancedMode);
+		deleteButton.gameObject.SetActive(!advancedMode);
+
+		foreach (KeyValuePair<SelectableButton, CreatureEditor.Tool> entry in buttonMap) {
+			if (entry.Value == editor.SelectedTool) {
+				entry.Key.Selected = true;
+			} else {
+				entry.Key.Selected = false;
+			}
 		}
 	}
 
 	public void SelectButton(SelectableButton button) {
 
-		if (!button.Equals(selectedButton)) {
-			
-			button.Selected = true;
-			if (selectedButton != null) {
-				selectedButton.Selected = false;
-			}
-			selectedButton = button;
-
-			creatureBuilder.SelectedPart = buttonMap[button];
-		}
-	}
-
-	public void SelectButton(CreatureBuilder.BuildSelection part) {
-		
-		foreach ( SelectableButton button in buttonMap.Keys) {
-			
-			if (buttonMap[button].Equals(part)) {
-				SelectButton(button);
-				break;
-			}
-		}
+		editor.SelectedTool = buttonMap[button];
+		Refresh();
 	}
 }
+

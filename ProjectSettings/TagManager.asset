@@ -9,6 +9,7 @@ TagManager:
   - Obstacle
   - SettingsCanvas
   - Evolution
+  - SimulationConfig
   layers:
   - Default
   - TransparentFX
@@ -28,8 +29,8 @@ TagManager:
   - BestCreatureCreature
   - BestCreatureJoint
   - No Collisions
-  - 
-  - 
+  - PlaybackBackground
+  - SimulationBackground
   - 
   - 
   - 

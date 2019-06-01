@@ -8,14 +8,14 @@ using Keiwando.NativeFileSO;
 public class SimulationFileManager : MonoBehaviour, FileSelectionViewControllerDelegate {
 
 	[SerializeField]
-	private CreatureBuilder creatureBuilder;
-	[SerializeField]
-	private Evolution evolution;
+	private CreatureEditor editor;
 
 	[SerializeField]
 	private FileSelectionViewController viewController;
 	[SerializeField]
 	private UIFade importIndicator;
+	[SerializeField]
+	private UIFade failedImportIndicator;
 
 	private int selectedIndex = 0;
 	private List<string> filenames;
@@ -27,6 +27,15 @@ public class SimulationFileManager : MonoBehaviour, FileSelectionViewControllerD
 				var extension = file.Extension.ToLower();
 				if (extension.Equals(".evol")) {
 					// TODO: Validate file contents
+					var encoded = file.ToUTF8String();
+					try {
+						var simulationData = SimulationSerializer.ParseSimulationData(encoded);
+						SimulationSerializer.SaveSimulation(simulationData);
+					} catch {
+						didImport = false;
+						Debug.LogError(string.Format("Failed to parse .evol file contents: {0}", encoded));
+						continue;
+					}
 					SimulationSerializer.SaveSimulationFile(file.Name, file.ToUTF8String());
 					didImport = true;
 				}
@@ -71,7 +80,7 @@ public class SimulationFileManager : MonoBehaviour, FileSelectionViewControllerD
 	}
 
 	public bool IsCharacterValidForName(FileSelectionViewController controller, char c) {
-		return !SimulationSerializer.INVALID_NAME_CHARACTERS.Contains(c);
+		return !FileUtil.INVALID_FILENAME_CHARACTERS.Contains(c);
 	}
 
 	public bool IsNameAvailable(FileSelectionViewController controller, string newName) {
@@ -97,7 +106,8 @@ public class SimulationFileManager : MonoBehaviour, FileSelectionViewControllerD
 
 		yield return new WaitForEndOfFrame();
 
-		SimulationSerializer.LoadSimulationFromSaveFile(filename, creatureBuilder, evolution);
+		var simulationData = SimulationSerializer.LoadSimulationData(filename);
+		editor.StartSimulation(simulationData);
 	}
 
 	public void ImportButtonClicked(FileSelectionViewController controller) {
@@ -146,6 +156,8 @@ public class SimulationFileManager : MonoBehaviour, FileSelectionViewControllerD
 	}
 
 	private void RefreshCache() {
-		filenames = SimulationSerializer.GetEvolutionSaveFilenames();
+		filenames = SimulationSerializer.GetEvolutionSaveFilenames()
+			.Select(filename => SimulationSerializer.EXTENSION_PATTERN.Replace(filename, ""))
+			.ToList();
 	}
 }
