@@ -49,7 +49,7 @@ public class CreatureEditor: MonoBehaviour,
 
     // MARK: - Movement
     private Vector3 lastDragPosition;
-    private HashSet<Joint> jointsToMove;
+    private HashSet<Joint> jointsToMove = new HashSet<Joint>();
 
     void Start() {
 
@@ -81,6 +81,7 @@ public class CreatureEditor: MonoBehaviour,
     void Update() {
 
         selectionManager.Update(Input.mousePosition);
+        InputUtils.UpdateTouches();
         HandleClicks();
         HandleKeyboardInput();
     }
@@ -189,7 +190,13 @@ public class CreatureEditor: MonoBehaviour,
     private void HandleClicks() {
 
         if (cameraController.IsAdjustingCamera) return;
-        if (EventSystem.current.IsPointerOverGameObject()) return;
+
+        bool isPointerOverUI = false;
+        isPointerOverUI |= EventSystem.current.IsPointerOverGameObject();
+        if (Input.touchCount > 0) {
+            isPointerOverUI |= InputUtils.IsTouchOverUI(Input.GetTouch(0).fingerId);
+        }
+        // if (EventSystem.current.IsPointerOverGameObject()) return;
 
         var clickWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         clickWorldPos.z = 0;
@@ -203,8 +210,9 @@ public class CreatureEditor: MonoBehaviour,
         // Mouse Down
         if (Input.GetMouseButtonDown(0)) { 
 
-            if (EventSystem.current.IsPointerOverGameObject()) return;
-            if (InputUtils.IsPointerOverUIObject()) return;
+            // if (EventSystem.current.IsPointerOverGameObject()) return;
+            // if (InputUtils.IsPointerOverUIObject()) return;
+            if (isPointerOverUI) return;
             
             switch (selectedTool) {
 
@@ -257,6 +265,7 @@ public class CreatureEditor: MonoBehaviour,
                 break;
 
             case Tool.Select:
+                if (isPointerOverUI) break;
                 selectionManager.UpdateSelection(clickWorldPos); break;
             default: break;
             }
@@ -271,8 +280,9 @@ public class CreatureEditor: MonoBehaviour,
             switch (selectedTool) {
 
             case Tool.Joint:
-                if (EventSystem.current.IsPointerOverGameObject()) return;
-                if (InputUtils.IsPointerOverUIObject()) return;
+                // if (EventSystem.current.IsPointerOverGameObject()) return;
+                // if (InputUtils.IsPointerOverUIObject()) return;
+                if (isPointerOverUI) return;
                 if (Input.touchCount > 1) return;
                 creatureEdited = creatureBuilder.TryPlacingJoint(clickWorldPos); 
                 break;
@@ -285,10 +295,14 @@ public class CreatureEditor: MonoBehaviour,
 
             case Tool.Move: 
                 creatureEdited = creatureBuilder.MoveEnded(jointsToMove); 
-                selectionManager.DeselectAll();
+                jointsToMove.Clear();
+                if (!isPointerOverUI) {
+                    selectionManager.DeselectAll();
+                }
                 break;
 
             case Tool.Delete:
+                if (isPointerOverUI) return;
                 selectionManager.AddCurrentHoveringToSelection();
                 var selection = selectionManager.GetSelection();
                 creatureEdited = selection.Count > 0;
@@ -395,7 +409,7 @@ public class CreatureEditor: MonoBehaviour,
         if (tool != Tool.Select) {
             viewController.ShowBasicSettingsControls();
         }
-        UpdateHoverables();
+        // UpdateHoverables();
         if (onToolChanged != null) {
             onToolChanged(tool);
         }
@@ -434,37 +448,6 @@ public class CreatureEditor: MonoBehaviour,
                 historyManager.Push(oldDesign);
                 viewController.Refresh();
             }
-        }
-    }
-
-    // MARK: - Highlighting on Hover
-
-    // TODO: Remove this
-
-    /// <summary>
-	/// Sets the shouldHighlight variable appropiately on every hoverable object
-	/// depending on the currently selected part.  
-	/// </summary>
-    private void UpdateHoverables() {
-
-        creatureBuilder.SetMouseHoverTextures(null);
-
-        switch (selectedTool) {
-        case Tool.Joint: 
-            creatureBuilder.EnableHighlighting(false, false, false); break;
-        case Tool.Bone:
-            creatureBuilder.EnableHighlighting(true, false, false); break;
-        case Tool.Muscle:
-            creatureBuilder.EnableHighlighting(false, true, false); break;
-        case Tool.Move:
-            creatureBuilder.EnableHighlighting(true, true, false); break;
-        case Tool.Select:
-            // creatureBuilder.EnableHighlighting(true, true, true); break;
-            break;
-        case Tool.Delete:
-            creatureBuilder.SetMouseHoverTextures(mouseDeleteTexture);
-            creatureBuilder.EnableHighlighting(true, true, true);
-            break;
         }
     }
 
