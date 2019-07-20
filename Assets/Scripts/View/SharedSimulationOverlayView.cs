@@ -7,6 +7,7 @@ public interface ISharedSimulationOverlayViewDelegate {
     
     bool IsAutoSaveEnabled(SharedSimulationOverlayView view);
     bool IsPlaybackPossiblyInaccurate(SharedSimulationOverlayView view);
+    bool IsRecordingPlaybackAsAnimation(SharedSimulationOverlayView view);
 
     void InaccuratePlaybackButtonClicked(SharedSimulationOverlayView view);
     void PauseButtonClicked(SharedSimulationOverlayView view);
@@ -27,6 +28,8 @@ public class SharedSimulationOverlayView: MonoBehaviour {
     [SerializeField] private Toggle autosaveToggle;
     [SerializeField] private Button saveButton;
     [SerializeField] private Text successfulSaveLabel;
+
+    [SerializeField] private Image recordingIndicator;
 
     [SerializeField] private Button backButton;
 
@@ -60,6 +63,7 @@ public class SharedSimulationOverlayView: MonoBehaviour {
 
         autosaveToggle.isOn = Delegate.IsAutoSaveEnabled(this);
         inaccuratePlaybackButton.gameObject.SetActive(Delegate.IsPlaybackPossiblyInaccurate(this));
+        recordingIndicator.gameObject.SetActive(Delegate.IsRecordingPlaybackAsAnimation(this));
     }
 
     public void ShowSuccessfulSaveAlert() {

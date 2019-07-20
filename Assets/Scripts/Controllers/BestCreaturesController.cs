@@ -13,6 +13,7 @@ namespace Keiwando.Evolution {
 		#region Events
 
 		public event Action PlaybackDidBegin;
+		public event Action AnimationRecordingToggled;
 
 		#endregion
 
@@ -37,6 +38,12 @@ namespace Keiwando.Evolution {
 			}
 		}
 		private bool autoplayEnabled;
+
+		public bool Recording {
+			get { return recording; }
+		}
+		private bool recording = false;
+		private AnimationDataRecorder animationDataRecorder;
 
 		public int AutoplayDuration { get; set; }
 
@@ -66,6 +73,31 @@ namespace Keiwando.Evolution {
 					ShowBestCreature(evolution.SimulationData.BestCreatures.Count);
 				}
 			};
+		}
+
+		void Update() {
+
+			if (
+				Input.GetKey(KeyCode.LeftCommand) || 
+				Input.GetKey(KeyCode.LeftControl) || 
+				Input.GetKey(KeyCode.RightCommand) ||
+				Input.GetKey(KeyCode.RightControl)
+			) {
+				if (Input.GetKeyDown(KeyCode.R)) {
+					recording = !recording;
+					if (AnimationRecordingToggled != null)
+						AnimationRecordingToggled();
+					if (recording) {
+						if (animationDataRecorder == null) {
+							var recoderObject = new GameObject("AnimationRecoder");
+							recoderObject.transform.SetParent(transform.parent);
+							animationDataRecorder = recoderObject.AddComponent<AnimationDataRecorder>();
+						}
+					} else {
+						animationDataRecorder?.EndRecording();
+					}
+				}
+			} 
 		}
 
 		void FixedUpdate() {
@@ -123,6 +155,11 @@ namespace Keiwando.Evolution {
 			this.CurrentBest.Alive = true;
 			this.CurrentBest.gameObject.SetActive(true);
 
+			if (recording) {
+				animationDataRecorder.Creature = this.CurrentBest;
+				animationDataRecorder.StartRecording(evolution.SimulationData.CreatureDesign);
+			}
+
 			AutoPlay();
 
 			if (PlaybackDidBegin != null) PlaybackDidBegin();
@@ -146,6 +183,12 @@ namespace Keiwando.Evolution {
 			while (!GenerationHasBeenSimulated(CurrentGeneration + 1)) {
 				// yield return new WaitForSeconds(time / 3);
 				yield return new WaitForSeconds(time / 30.0f);
+			}
+
+			if (animationDataRecorder != null && animationDataRecorder.Recording) {
+				recording = false;
+				if (AnimationRecordingToggled != null) AnimationRecordingToggled();
+				animationDataRecorder.EndRecording();
 			}
 
 			ShowBestCreature(CurrentGeneration + 1);

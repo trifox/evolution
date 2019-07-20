@@ -66,6 +66,10 @@ public class SimulationViewController : MonoBehaviour,
 			Refresh();
 		};
 
+		bestCreatureController.AnimationRecordingToggled += delegate () {
+			Refresh();
+		};
+
 		evolution.InitializationDidEnd += delegate () {
 			if (!Settings.DontShowV2SimulationDeprecationOverlayAgain 
 			&& evolution.SimulationData.LastV2SimulatedGeneration > 0) {
@@ -148,6 +152,10 @@ public class SimulationViewController : MonoBehaviour,
 
 	public bool IsPlaybackPossiblyInaccurate(SharedSimulationOverlayView view) {
 		return (evolution.SimulationData?.LastV2SimulatedGeneration ?? 0) > 0;
+	}
+
+	public bool IsRecordingPlaybackAsAnimation(SharedSimulationOverlayView view) {
+		return bestCreatureController.Recording;
 	}
 
     public void PauseButtonClicked(SharedSimulationOverlayView view) {
