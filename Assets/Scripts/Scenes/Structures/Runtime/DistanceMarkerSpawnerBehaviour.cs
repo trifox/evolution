@@ -1,16 +1,16 @@
 using UnityEngine;
 using System.Collections.Generic;
-using Keiwando.Evolution.Scenes;
 
-namespace Keiwando.Evolution {
+namespace Keiwando.Evolution.Scenes {
 
-    public class DistanceMarkerSpawner: MonoBehaviour {
+    public class DistanceMarkerSpawnerBehaviour: MonoBehaviour {
 
         private const int INITIAL_SPAWN_COUNT = 100;
         private const float STAT_ADJUSTMENT_FACTOR = 5f;
 
         public float MarkerDistance { get; set; } = 5f;
         public float DistanceAngleFactor { get; set; } = 1f;
+        public float BestMarkerRotation { get; set; } = 0f;
 
         public ISceneContext Context { get; set; }
 
@@ -33,7 +33,6 @@ namespace Keiwando.Evolution {
             var pos = transform.position;
             // Push the markers into the background
             pos.z = 3;
-            // TODO: Add factor to distance calculation
             // Create markers
             for (int i = 1; i <= INITIAL_SPAWN_COUNT; i++) {
                 pos += transform.right * MarkerDistance * STAT_ADJUSTMENT_FACTOR;
@@ -42,14 +41,14 @@ namespace Keiwando.Evolution {
             }
 
             // Create marker for best of previous gen
-            var prevBestDistance = Context != null ? Context.GetDistanceOfBest(Context.GetCurrentGeneration() - 1) : float.NaN;
+            var prevBestDistance = Context != null ? Context.GetDistanceOfBest() : float.NaN;
             if (!float.IsNaN(prevBestDistance)) {
                 var actualDistance = prevBestDistance / (STAT_ADJUSTMENT_FACTOR * DistanceAngleFactor);
                 var bestLabelPos = transform.position + (prevBestDistance * transform.right);
-                var rotationEulerAngle = transform.eulerAngles.z + 90f;
+                var rotationEulerAngle = BestMarkerRotation;
                 var marker = AddMarker(bestMarkerTemplate, bestLabelPos, actualDistance.ToString("0"), rotationEulerAngle);
-                marker.Text.text = "---  ";
-                marker.Text.color = new Color(0.23f, 0.23f, 0.23f, 0.36f);
+                marker.Text = "---  ";
+                marker.TextColor = new Color(0.23f, 0.23f, 0.23f, 0.36f);
             }
 
             template.gameObject.SetActive(false);
@@ -59,11 +58,15 @@ namespace Keiwando.Evolution {
         private DistanceMarker AddMarker(DistanceMarker template, Vector3 pos, string label, float rotation = 0) {
 
             var newMarker = Instantiate(template, pos, Quaternion.Euler(0, 0, rotation), template.transform.parent);
-            newMarker.Text.text = label;
+            newMarker.Text = label;
             newMarker.gameObject.layer = this.gameObject.layer;
+            var markerTransform = newMarker.transform;
+            for (int i = 0; i < markerTransform.childCount; i++) {
+                var child = markerTransform.GetChild(i);
+                child.gameObject.layer = newMarker.gameObject.layer;
+            }
             allMarkers.Add(newMarker);
             return newMarker;
         }
     }
 }
-

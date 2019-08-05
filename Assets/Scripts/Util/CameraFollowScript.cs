@@ -1,39 +1,33 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
-using System.Collections;
+﻿// using UnityEngine;
+// using UnityEngine.UI;
+// using System.Collections;
 
-/** Has to be attached to a camera. */
-public class CameraFollowScript : MonoBehaviour {
+// [RequireComponent(typeof(Camera))]
+// public class CameraFollowScript : MonoBehaviour {
 
-	public RenderTexture renderTexture;
+// 	public RenderTexture renderTexture;
 
-	public Creature toFollow;
+// 	public Creature toFollow;
 
-	public bool DiagonalLock = false;
+// 	public bool DiagonalLock = false;
 
-	new private Camera camera;
+// 	private Vector3 startPos;
 
-	private Vector3 startPos;
+// 	void Start () {
+// 		startPos = transform.position;
+// 	}
 
-	// Use this for initialization
-	void Start () {
+// 	void Update () {
 
-		camera = GetComponent<Camera>();
-		startPos = camera.transform.position;
-	}
+// 		if (toFollow == null) return;
 
-	// Update is called once per frame
-	void Update () {
+// 		Vector3 newPos = transform.position;
+// 		newPos.x = toFollow.GetXPosition();
 
-		if (toFollow == null) return;
+// 		if (true || DiagonalLock) {
+// 			newPos.y = (newPos.x - startPos.x) + startPos.y;
+// 		}
 
-		Vector3 newPos = transform.position;
-		newPos.x = toFollow.GetXPosition();
-
-		if (true || DiagonalLock) {
-			newPos.y = (newPos.x - startPos.x) + startPos.y;
-		}
-
-		transform.position = newPos;
-	}
-}
+// 		transform.position = newPos;
+// 	}
+// }

@@ -43,12 +43,6 @@ public class Creature : MonoBehaviour {
 	}
 	private float floorHeight = 0;
 
-	public GameObject Obstacle {
-		get { return obstacle; }
-		set { obstacle = value; }	
-	}
-	private GameObject obstacle;
-
 	public PhysicsScene PhysicsScene { get; set; }
 
 	private static LayerMask groundLayerMask = 1 << 9; //LayerMask.NameToLayer("Ground");
@@ -56,8 +50,6 @@ public class Creature : MonoBehaviour {
 	private float maxJumpingHeight;
 
 	public bool usesLegacyRotationCalculation { get; set; } = false;
-
-	//private Vector3 currentLowest;
 
 	//public bool DEBUG = false;
 
@@ -363,7 +355,7 @@ public class Creature : MonoBehaviour {
 		return max;
 	}
 
-	public float GetDistanceFromObstacle() {
+	public float GetDistanceFromObstacle(GameObject obstacle) {
 		
 		float minDistance = float.PositiveInfinity;
 
@@ -441,19 +433,19 @@ public class Creature : MonoBehaviour {
 	public void SetOnBestCreatureLayer() {
 
 		foreach (var bone in bones) {
-			bone.gameObject.layer = LayerMask.NameToLayer("BestCreatureCreature");
-			bone.muscleJoint.gameObject.layer = LayerMask.NameToLayer("BestCreatureCreature");
+			bone.gameObject.layer = LayerMask.NameToLayer("PlaybackCreature");
+			bone.muscleJoint.gameObject.layer = LayerMask.NameToLayer("PlaybackCreature");
 		}
 
 		foreach (var joint in joints) {
-			joint.gameObject.layer = LayerMask.NameToLayer("BestCreatureJoint");
+			joint.gameObject.layer = LayerMask.NameToLayer("PlaybackJoint");
 		}
 
 		foreach (var muscle in muscles) {
-			muscle.gameObject.layer = LayerMask.NameToLayer("BestCreatureCreature");
+			muscle.gameObject.layer = LayerMask.NameToLayer("PlaybackCreature");
 		}
 
-		gameObject.layer = LayerMask.NameToLayer("BestCreatureCreature");
+		gameObject.layer = LayerMask.NameToLayer("PlaybackCreature");
 	}
 
 	public void Reset() {

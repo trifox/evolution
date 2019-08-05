@@ -50,7 +50,6 @@ namespace Keiwando.Evolution {
         public static void LoadSync(Scene scene) {
 
             InputRegistry.shared.DeregisterAll();
-            InputRegistry.shared.DeregisterAllBackButtonCallbacks();
             SceneManager.LoadScene(NameForScene(scene));
         }
 
@@ -96,7 +95,8 @@ namespace Keiwando.Evolution {
                 config.CreatureDesign, 
                 config.CreatureSpawnCount,
                 context.PhysicsScene,
-                config.LegacyOptions
+                config.LegacyOptions,
+                config.SceneDescription
             );
             var creatures = sceneSetup.SpawnBatch(spawnOptions);
             SceneManager.SetActiveScene(prevActiveScene);
