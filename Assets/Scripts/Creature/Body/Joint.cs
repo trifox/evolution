@@ -2,147 +2,168 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class Joint : BodyComponent {
+public class Joint : BodyComponent
+{
 
-	private const string PATH = "Prefabs/Joint";
+    private const string PATH = "Prefabs/Joint";
 
-	public Vector3 center { 
-		get { return transform.position; } 
-	}
+    public Vector3 center
+    {
+        get { return transform.position; }
+    }
 
-	public JointData JointData { get; set; }
+    public JointData JointData { get; set; }
 
-	public Rigidbody Body {
-		get { return body; }
-	}
-	private Rigidbody body;
+    public Rigidbody Body
+    {
+        get { return body; }
+    }
+    private Rigidbody body;
 
-	public bool isCollidingWithGround { get; private set; }
-	public bool isCollidingWithObstacle { get; private set; }
+    public bool isCollidingWithGround { get; private set; }
+    public bool isCollidingWithObstacle { get; private set; }
 
-	private Dictionary<Bone, UnityEngine.Joint> joints = new Dictionary<Bone, UnityEngine.Joint>();
+    private Dictionary<Bone, UnityEngine.Joint> joints = new Dictionary<Bone, UnityEngine.Joint>();
 
-	private Vector3 resetPosition;
-	private Quaternion resetRotation;
-	private bool iterating;
+    private Vector3 resetPosition;
+    private Quaternion resetRotation;
+    private bool iterating;
 
-	public static Joint CreateFromData(JointData data) {
-		
-		var joint = ((GameObject) Instantiate(Resources.Load(PATH), data.position, Quaternion.identity)).GetComponent<Joint>();
-		var renderer = joint.GetComponent<MeshRenderer>();
-		renderer.sortingOrder = 2;
-		joint.JointData = data;
-		return joint;
-	}
+    public static Joint CreateFromData(JointData data)
+    {
 
-	public override void Start () {
-		base.Start();
+        Joint joint = ((GameObject)Instantiate(Resources.Load(PATH), data.position, Quaternion.identity)).GetComponent<Joint>();
+        var renderer = joint.GetComponent<MeshRenderer>();
+        renderer.sortingOrder = 2;
+        joint.JointData = data;
+        return joint;
+    }
 
-		resetPosition = transform.position;
-		resetRotation = transform.rotation;
+    public override void Start()
+    {
+        base.Start();
 
-		body = GetComponent<Rigidbody>();
+        resetPosition = transform.position;
+        resetRotation = transform.rotation;
 
-		body.mass = JointData.weight;
-	}
+        body = GetComponent<Rigidbody>();
 
-	public void Reset() {
-		transform.SetPositionAndRotation(resetPosition, resetRotation);
-		body.velocity = Vector3.zero;
-		body.angularVelocity = Vector3.zero;
-		isCollidingWithGround = false;
-		isCollidingWithObstacle = false;
-	}
+        body.mass = JointData.weight;
+    }
 
-	/// <summary>
-	/// Moves the joint to the specified position and updates all of the connected objects.
-	/// </summary>
-	public void MoveTo(Vector3 newPosition) {
+    public void Reset()
+    {
+        transform.SetPositionAndRotation(resetPosition, resetRotation);
+        body.velocity = Vector3.zero;
+        body.angularVelocity = Vector3.zero;
+        isCollidingWithGround = false;
+        isCollidingWithObstacle = false;
+    }
 
-		transform.position = newPosition;
+    /// <summary>
+    /// Moves the joint to the specified position and updates all of the connected objects.
+    /// </summary>
+    public void MoveTo(Vector3 newPosition)
+    {
 
-		foreach (var connectedBone in joints.Keys) {
-			connectedBone.RefreshBonePlacement();
-		}
-	}
+        transform.position = newPosition;
 
-	public void Connect(Bone bone) {
+        foreach (var connectedBone in joints.Keys)
+        {
+            connectedBone.RefreshBonePlacement();
+        }
+    }
 
-		HingeJoint joint = gameObject.AddComponent<HingeJoint>();
-		//ConfigurableJoint joint = gameObject.AddComponent<ConfigurableJoint>();
-		joint.anchor = Vector3.zero;
-		joint.axis = new Vector3(0, 0, 1);
-		joint.autoConfigureConnectedAnchor = true;
-		joint.useSpring = false;
-		//var spring = joint.spring;
-		//spring.spring = 1000f;
-		//joint.spring = spring;
-		//joint.connectedAnchor = new Vector3(0, 1.14f, 0);
-		joint.enablePreprocessing = true;
-		joint.enableCollision = false;
+    public void Connect(Bone bone)
+    {
 
-		joint.connectedBody = bone.gameObject.GetComponent<Rigidbody>();
+        HingeJoint joint = gameObject.AddComponent<HingeJoint>();
+        //ConfigurableJoint joint = gameObject.AddComponent<ConfigurableJoint>();
+        joint.anchor = Vector3.zero;
+        joint.axis = new Vector3(0, 0, 1);
+        joint.autoConfigureConnectedAnchor = true;
+        joint.useSpring = false;
+        //var spring = joint.spring;
+        //spring.spring = 1000f;
+        //joint.spring = spring;
+        //joint.connectedAnchor = new Vector3(0, 1.14f, 0);
+        joint.enablePreprocessing = true;
+        joint.enableCollision = false;
 
-		joints.Add(bone, joint);
-	}
+        joint.connectedBody = bone.gameObject.GetComponent<Rigidbody>();
 
-	/** Disconnects the bone from the joint. */
-	public void Disconnect(Bone bone) {
+        joints.Add(bone, joint);
+    }
 
-		if (!joints.ContainsKey(bone)) return;
-		
-		UnityEngine.Joint joint = joints[bone];
-		Destroy(joint);
-		if (!iterating)
-			joints.Remove(bone);
-	}
-		
-	/// <summary>
-	/// Deletes the joint and all attached objects from the scene.
-	/// </summary>
-	public override void Delete() {
-		base.Delete();
+    /** Disconnects the bone from the joint. */
+    public void Disconnect(Bone bone)
+    {
 
-		iterating = true;
+        if (!joints.ContainsKey(bone)) return;
 
-		List<Bone> toDelete = new List<Bone>();
-		// disconnect the bones
-		foreach(Bone bone in joints.Keys) {
+        UnityEngine.Joint joint = joints[bone];
+        Destroy(joint);
+        if (!iterating)
+            joints.Remove(bone);
+    }
 
-			bone.Delete();
-			toDelete.Add(bone);
-		}
+    /// <summary>
+    /// Deletes the joint and all attached objects from the scene.
+    /// </summary>
+    public override void Delete()
+    {
+        base.Delete();
 
-		foreach(Bone bone in toDelete) {
-			joints.Remove(bone);
-		}
+        iterating = true;
 
-		iterating = false;
+        List<Bone> toDelete = new List<Bone>();
+        // disconnect the bones
+        foreach (Bone bone in joints.Keys)
+        {
 
-		Destroy(gameObject);
-	}
+            bone.Delete();
+            toDelete.Add(bone);
+        }
 
-	public override void PrepareForEvolution() {
+        foreach (Bone bone in toDelete)
+        {
+            joints.Remove(bone);
+        }
 
-		body = GetComponent<Rigidbody>();
-		body.isKinematic = false;
-	}
-		
-	void OnTriggerEnter(Collider collider) {
+        iterating = false;
 
-		if (collider.CompareTag("Ground")) {
-			isCollidingWithGround = true;
-		} else if (collider.CompareTag("Obstacle")) {
-			isCollidingWithObstacle = true;
-		}
-	}
+        Destroy(gameObject);
+    }
 
-	void OnTriggerExit(Collider collider) {
+    public override void PrepareForEvolution()
+    {
 
-		//if (collider.tag.ToUpper() == "OBSTACLE") 
-		if (collider.CompareTag("Obstacle")) 
-			isCollidingWithObstacle = false;
-		else
-			isCollidingWithGround = false;	
-	}
+        body = GetComponent<Rigidbody>();
+        body.isKinematic = false;
+    }
+
+    void OnTriggerEnter(Collider collider)
+    {
+
+        if (collider.CompareTag("Ground"))
+        {
+            isCollidingWithGround = true;
+        }
+        else if (collider.CompareTag("Obstacle"))
+        {
+            // D/ebug.LogWarning("ON ENTER OBSTACLE");
+
+            isCollidingWithObstacle = true;
+        }
+    }
+
+    void OnTriggerExit(Collider collider)
+    {
+
+        //if (collider.tag.ToUpper() == "OBSTACLE") 
+        if (collider.CompareTag("Obstacle"))
+            isCollidingWithObstacle = false;
+        else
+            isCollidingWithGround = false;
+    }
 }

@@ -3,9 +3,11 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Keiwando.Evolution {
+namespace Keiwando.Evolution
+{
 
-    public class EditorSelectionManager {
+    public class EditorSelectionManager
+    {
 
         private static RaycastHit[] _cachedPointCollisions = new RaycastHit[10];
         private static int _cachedPointCollisionsLength = 0;
@@ -33,104 +35,119 @@ namespace Keiwando.Evolution {
 
         public EditorSelectionManager(CreatureEditor editor,
                                       Transform selectionArea,
-                                      Texture2D mouseDeleteTexture) {
+                                      Texture2D mouseDeleteTexture)
+        {
             this.editor = editor;
             this.selectionArea = selectionArea;
             this.mouseDeleteTexture = mouseDeleteTexture;
             selectionArea.gameObject.SetActive(false);
         }
 
-        public void Update(Vector3 mouseScreenPos) {
+        public void Update(Vector3 mouseScreenPos)
+        {
 
             UpdateHoveringSelection(mouseScreenPos);
             UpdateSelectionHighlights();
             UpdateCursor();
         }
 
-        private void UpdateHoveringSelection(Vector3 mouseScreenPos) {
+        private void UpdateHoveringSelection(Vector3 mouseScreenPos)
+        {
 
             // Figure out which body components the mouse is hovering over
             BodyComponent hovering = null;
 
-            switch (editor.SelectedTool) {
+            switch (editor.SelectedTool)
+            {
 
-            case CreatureEditor.Tool.Bone: 
-                hovering = GetComponentAtScreenPoint<Joint>(mouseScreenPos); 
-                break;
+                case CreatureEditor.Tool.Bone:
+                    hovering = GetComponentAtScreenPoint<Joint>(mouseScreenPos);
+                    break;
 
-            case CreatureEditor.Tool.Muscle:
-                hovering = GetComponentAtScreenPoint<Bone>(mouseScreenPos); 
-                break;
+                case CreatureEditor.Tool.Muscle:
+                    hovering = GetComponentAtScreenPoint<Bone>(mouseScreenPos);
+                    break;
 
-            case CreatureEditor.Tool.Move:
-                hovering = GetComponentAtScreenPoint<Joint>(mouseScreenPos);
-                if (hovering == null)
-                    hovering = CheckCachedCollisionsFor<Bone>();
-                #if TEST || UNITY_IOS || UNITY_ANDROID
+                case CreatureEditor.Tool.Move:
+                    hovering = GetComponentAtScreenPoint<Joint>(mouseScreenPos);
+                    if (hovering == null)
+                        hovering = CheckCachedCollisionsFor<Bone>();
+#if TEST || UNITY_IOS || UNITY_ANDROID
                 if (hovering == null)
                     hovering = CheckCachedSphereCollisionsFor<Bone>();
-                #endif
+#endif
 
-                break;
+                    break;
 
-            case CreatureEditor.Tool.Delete:
-            case CreatureEditor.Tool.Select:
-                hovering = GetComponentAtScreenPoint<Joint>(mouseScreenPos);
-                if (hovering == null)
-                    hovering = CheckCachedCollisionsFor<Bone>();
-                if (hovering == null)
-                    hovering = CheckCachedCollisionsFor<Muscle>();
-                #if TEST || UNITY_IOS || UNITY_ANDROID
+                case CreatureEditor.Tool.Delete:
+                case CreatureEditor.Tool.Select:
+                    hovering = GetComponentAtScreenPoint<Joint>(mouseScreenPos);
+                    if (hovering == null)
+                        hovering = CheckCachedCollisionsFor<Bone>();
+                    if (hovering == null)
+                        hovering = CheckCachedCollisionsFor<Muscle>();
+#if TEST || UNITY_IOS || UNITY_ANDROID
                 if (hovering == null)
                     hovering = CheckCachedSphereCollisionsFor<Bone>();
                 if (hovering == null)
                     hovering = CheckCachedSphereCollisionsFor<Muscle>();
-                #endif
-                break;
+#endif
+                    break;
 
-            default: break;
+                default: break;
             }
 
             lastHovering = currentHovering;
             currentHovering = hovering;
         }
 
-        private void UpdateSelectionHighlights() {
-            
-            if (lastHovering != null && !selection.Contains(lastHovering)) {
+        private void UpdateSelectionHighlights()
+        {
+
+            if (lastHovering != null && !selection.Contains(lastHovering))
+            {
                 lastHovering.DisableHighlight();
             }
-            if (selection.Count == 0) {
+            if (selection.Count == 0)
+            {
                 currentHovering?.EnableHighlight();
             }
         }
 
-        private void UpdateCursor() {
+        private void UpdateCursor()
+        {
             var hotspot = Vector2.zero;
             Texture2D texture = null;
-            if (editor.SelectedTool == CreatureEditor.Tool.Delete 
-                && currentHovering != null) {
+            if (editor.SelectedTool == CreatureEditor.Tool.Delete
+                && currentHovering != null)
+            {
                 texture = this.mouseDeleteTexture;
                 hotspot = new Vector2(texture.width / 2, texture.height / 2);
             }
             Cursor.SetCursor(texture, hotspot, CursorMode.Auto);
         }
 
-        public T GetSingleSelected<T>() where T: BodyComponent {
-            
+        public T GetSingleSelected<T>() where T : BodyComponent
+        {
+
             if (currentHovering == null) { return null; }
             if (currentHovering is T) { return currentHovering as T; }
             return null;
         }
 
-        public HashSet<Joint> GetJointsToMoveFromSelection() {
-            
+        public HashSet<Joint> GetJointsToMoveFromSelection()
+        {
+
             HashSet<Joint> jointsToMove = new HashSet<Joint>();
-            for (int i = 0; i < selection.Count; i++) {
+            for (int i = 0; i < selection.Count; i++)
+            {
                 var component = selection[i];
-                if (component is Joint) {
+                if (component is Joint)
+                {
                     jointsToMove.Add(component as Joint);
-                } else if (component is Bone) {
+                }
+                else if (component is Bone)
+                {
                     var bone = component as Bone;
                     jointsToMove.Add(bone.startingJoint);
                     jointsToMove.Add(bone.endingJoint);
@@ -139,12 +156,14 @@ namespace Keiwando.Evolution {
             return jointsToMove;
         }
 
-        public void AddCurrentHoveringToSelection() {
+        public void AddCurrentHoveringToSelection()
+        {
             if (currentHovering != null)
                 selection.Add(currentHovering);
         }
 
-        public void StartSelection(Vector3 startPosition) {
+        public void StartSelection(Vector3 startPosition)
+        {
 
             this.areaStart = startPosition;
             this.currentAreaEnd = startPosition;
@@ -152,7 +171,8 @@ namespace Keiwando.Evolution {
             UpdateVisualSelectionArea();
         }
 
-        public void UpdateSelection(Vector3 currentEndPosition) {
+        public void UpdateSelection(Vector3 currentEndPosition)
+        {
 
             if (!selectionArea.gameObject.activeSelf) return;
 
@@ -161,56 +181,68 @@ namespace Keiwando.Evolution {
 
             // Don't prematurely highlight when it could still be counted as a 
             // touch instead of a drag (prevents flickering)
-            if (Vector3.Distance(areaStart, currentAreaEnd) >= TAP_THRESHOLD) {
+            if (Vector3.Distance(areaStart, currentAreaEnd) >= TAP_THRESHOLD)
+            {
                 SelectInArea<BodyComponent>(GetSelectionRect(), this.selection);
             }
         }
 
-        public void EndSelection() {
+        public void EndSelection()
+        {
 
             if (!selectionArea.gameObject.activeSelf) return;
-            
+
             selectionArea.gameObject.SetActive(false);
 
             if (selectionArea.localScale == Vector3.zero) return;
 
             // Check if this was actually a touch/click instead of a drag
             // and adjust the selection algorithm accordingly if necessary
-            if (Vector3.Distance(areaStart, currentAreaEnd) < TAP_THRESHOLD) {
+            if (Vector3.Distance(areaStart, currentAreaEnd) < TAP_THRESHOLD)
+            {
                 var selectionRect = new Rect(areaStart.x, areaStart.y, TAP_THRESHOLD, TAP_THRESHOLD);
                 bool jointSelected = SelectInArea<Joint>(selectionRect, this.selection);
-                if (!jointSelected) {
+                if (!jointSelected)
+                {
                     bool boneSelected = SelectInArea<Bone>(selectionRect, this.selection);
-                    if (!boneSelected) {
+                    if (!boneSelected)
+                    {
                         SelectInArea<Muscle>(selectionRect, this.selection);
                     }
                 }
-            } else {
+            }
+            else
+            {
                 SelectInArea<BodyComponent>(GetSelectionRect(), this.selection);
             }
 
             selectionArea.localScale = Vector3.zero;
-        } 
+        }
 
-        public void DeselectAll() {
+        public void DeselectAll()
+        {
 
-            foreach (var item in selection) {
+            foreach (var item in selection)
+            {
                 item.DisableHighlight();
             }
             selection.Clear();
         }
 
-        public bool IsAnythingSelected() {
+        public bool IsAnythingSelected()
+        {
             return this.selection.Count > 0;
         }
 
-        public List<BodyComponent> GetSelection() {
+        public List<BodyComponent> GetSelection()
+        {
             return this.selection;
         }
 
-        public List<T> GetSelectedParts<T>() 
-            where T: BodyComponent {
-                
+        public List<T> GetSelectedParts<T>()
+            where T : BodyComponent
+        {
+
             var result = new List<T>();
             for (int i = 0; i < selection.Count; i++)
                 if (selection[i] is T)
@@ -218,7 +250,8 @@ namespace Keiwando.Evolution {
             return result;
         }
 
-        public bool DeleteSelection(CreatureBuilder builder) {
+        public bool DeleteSelection(CreatureBuilder builder)
+        {
 
             bool creatureChanged = this.selection.Count > 0;
             builder.Delete(this.selection);
@@ -226,7 +259,8 @@ namespace Keiwando.Evolution {
             return creatureChanged;
         }
 
-        private void UpdateVisualSelectionArea() {
+        private void UpdateVisualSelectionArea()
+        {
 
             var center = new Vector3(
                 0.5f * (areaStart.x + currentAreaEnd.x),
@@ -243,7 +277,8 @@ namespace Keiwando.Evolution {
             selectionArea.position = center;
         }
 
-        private Rect GetSelectionRect() {
+        private Rect GetSelectionRect()
+        {
 
             var pos = selectionArea.position;
             var size = selectionArea.localScale;
@@ -254,54 +289,65 @@ namespace Keiwando.Evolution {
         }
 
         private bool SelectInArea<T>(Rect selectionArea, List<BodyComponent> selection)
-            where T: BodyComponent {
+            where T : BodyComponent
+        {
 
             GetComponentsInRect<T>(selectionArea, selection);
-            
+
             // Only select a single component with a click
-            if (selectionArea.size.magnitude < TAP_THRESHOLD * 2f && selection.Count > 1) {
+            if (selectionArea.size.magnitude < TAP_THRESHOLD * 2f && selection.Count > 1)
+            {
                 var item = selection[0];
                 selection.Clear();
                 selection.Add(item);
             }
 
-            foreach (var item in selection) {
+            foreach (var item in selection)
+            {
                 item.EnableHighlight();
             }
 
-            if (selectionArea.size.magnitude >= TAP_THRESHOLD * 2f) {
+            if (selectionArea.size.magnitude >= TAP_THRESHOLD * 2f)
+            {
                 DisableHighlightsOnNonSelected();
             }
 
             return this.selection.Count > 0;
         }
 
-        private void DisableHighlightsOnNonSelected() {
+        private void DisableHighlightsOnNonSelected()
+        {
             var all = GameObject.FindObjectsOfType<BodyComponent>();
-            foreach (var bodyComponent in all) {
-                if (!this.selection.Contains(bodyComponent)) {
+            foreach (var bodyComponent in all)
+            {
+                if (!this.selection.Contains(bodyComponent))
+                {
                     bodyComponent.DisableHighlight();
                 }
             }
         }
 
-        private static void GetComponentsInRect<T>(Rect rect, List<BodyComponent> result) 
-            where T: BodyComponent {
+        private static void GetComponentsInRect<T>(Rect rect, List<BodyComponent> result)
+            where T : BodyComponent
+        {
 
             Collider[] colliders = Physics.OverlapBox(rect.center, rect.size * 0.5f);
-            
+
             result.Clear();
 
-            for (int i = 0; i < colliders.Length; i++) {
+            for (int i = 0; i < colliders.Length; i++)
+            {
                 var bodyComponent = colliders[i].GetComponent<T>();
-                if (bodyComponent != null) {
+                if (bodyComponent != null)
+                {
                     result.Add(bodyComponent);
                 }
             }
         }
 
-        private static T GetComponentAtScreenPoint<T>(Vector3 point) 
-            where T: BodyComponent {
+        public static T GetComponentAtScreenPoint<T>(Vector3 point)
+            where T : BodyComponent
+        {
 
             Camera camera = Camera.main;
             Ray ray = camera.ScreenPointToRay(point);
@@ -310,7 +356,7 @@ namespace Keiwando.Evolution {
             var hitCount = Physics.RaycastNonAlloc(ray, _cachedPointCollisions);
             _cachedPointCollisionsLength = Math.Min(hitCount, 10);
 
-            #if TEST || UNITY_IOS || UNITY_ANDROID
+#if TEST || UNITY_IOS || UNITY_ANDROID
             T item = CheckCachedCollisionsFor<T>();
             if (item == null) {
                 // Check again but with a larger radius
@@ -323,13 +369,15 @@ namespace Keiwando.Evolution {
                 return CheckCachedSphereCollisionsFor<T>();
             }
             return item;
-            #else
+#else
             return CheckCachedCollisionsFor<T>();
-            #endif
+#endif
         }
 
-        private static T CheckCachedCollisionsFor<T>() where T: BodyComponent {
-            for (int i = 0; i < _cachedPointCollisionsLength; i++) {
+        private static T CheckCachedCollisionsFor<T>() where T : BodyComponent
+        {
+            for (int i = 0; i < _cachedPointCollisionsLength; i++)
+            {
                 if (_cachedPointCollisions[i].collider == null) return null;
                 T component = _cachedPointCollisions[i].collider.GetComponent<T>();
                 if (component == null) continue;
@@ -338,8 +386,10 @@ namespace Keiwando.Evolution {
             return null;
         }
 
-        private static T CheckCachedSphereCollisionsFor<T>() where T: BodyComponent {
-            for (int i = 0; i < _cachedSphereCollisionsLength; i++) {
+        private static T CheckCachedSphereCollisionsFor<T>() where T : BodyComponent
+        {
+            for (int i = 0; i < _cachedSphereCollisionsLength; i++)
+            {
                 if (_cachedSphereCollisions[i] == null) return null;
                 T component = _cachedSphereCollisions[i].GetComponent<T>();
                 if (component == null) continue;

@@ -1,178 +1,225 @@
 using System;
 using System.Text;
 
-public static class ConversionUtils {
+public static class ConversionUtils
+{
 
     private static string[] lut = new string[256];
     // Temporary array created once for memory efficiency
     private static byte[] byteStore = new byte[8];
 
-    static ConversionUtils() {
+    static ConversionUtils()
+    {
         for (int i = 0; i < 256; i++)
             lut[i] = Convert.ToString(i, 2).PadLeft(8, '0');
     }
 
-    public static StringBuilder ByteToString(byte b, StringBuilder builder) {
+    public static StringBuilder ByteToString(byte b, StringBuilder builder)
+    {
         builder.Append(lut[b]);
         return builder;
     }
 
-    public static string ByteToString(byte b) {
+    public static string ByteToString(byte b)
+    {
         return lut[b];
     }
 
-    public static StringBuilder FloatToString(float number, StringBuilder builder) {
-		var bytes = BitConverter.GetBytes(number);
+    public static StringBuilder FloatToString(float number, StringBuilder builder)
+    {
+        var bytes = BitConverter.GetBytes(number);
 
-		for (int i = 0; i < bytes.Length; i++) {
-			
-			ByteToString(bytes[i], builder);
-		}
+        for (int i = 0; i < bytes.Length; i++)
+        {
 
-		return builder;
-	}
+            ByteToString(bytes[i], builder);
+        }
 
-    public static string FloatToString(float number) {
-		string result = "";
-
-		foreach (byte b in BitConverter.GetBytes(number))
-			result += Convert.ToString(b, 2).PadLeft(8, '0');
-		
-		return result;
-	}
-
-    public static string MatrixToString(float[][] matrix) {
-
-		string result = "";
-		for (int i = 0; i < matrix.Length; i++) {
-			for (int j = 0; j < matrix[0].Length; j++) {
-				// convert float into binary 32 bit string
-				result += FloatToString(matrix[i][j]);
-			}
-		}
-
-		return result;
-	}
-
-    public static void MatrixToString(float[][] matrix, StringBuilder builder) {
-	
-		for (int i = 0; i < matrix.Length; i++) {
-			for (int j = 0; j < matrix[0].Length; j++) {
-				// convert float into binary 32 bit string
-				FloatToString(matrix[i][j], builder);
-			}
-		}
-	}
-
-    public static float[][] BinaryStringToMatrix(int rows, int cols, string encoded) {
-
-        string[] parts = StringUtils.WholeChunks(encoded, 32);
-		float[][] matrix = MatrixUtils.CreateMatrix2D(rows, cols);
-
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
-				matrix[i][j] = BinaryStringToFloat(parts[i * cols + j]);
-			}
-		}
-
-		return matrix;
+        return builder;
     }
 
-    public static float[][] BinaryStringToMatrix(int rows, int cols, string encoded, int subStart) {
+    public static string FloatToString(float number)
+    {
+        string result = "";
+
+        foreach (byte b in BitConverter.GetBytes(number))
+            result += Convert.ToString(b, 2).PadLeft(8, '0');
+
+        return result;
+    }
+
+    public static string MatrixToString(float[][] matrix)
+    {
+
+        string result = "";
+        for (int i = 0; i < matrix.Length; i++)
+        {
+            for (int j = 0; j < matrix[0].Length; j++)
+            {
+                // convert float into binary 32 bit string
+                result += FloatToString(matrix[i][j]);
+            }
+        }
+
+        return result;
+    }
+
+    public static void MatrixToString(float[][] matrix, StringBuilder builder)
+    {
+
+        for (int i = 0; i < matrix.Length; i++)
+        {
+            for (int j = 0; j < matrix[0].Length; j++)
+            {
+                // convert float into binary 32 bit string
+                FloatToString(matrix[i][j], builder);
+            }
+        }
+    }
+
+    public static float[][] BinaryStringToMatrix(int rows, int cols, string encoded)
+    {
+
+        string[] parts = StringUtils.WholeChunks(encoded, 32);
+        float[][] matrix = MatrixUtils.CreateMatrix2D(rows, cols);
+
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                matrix[i][j] = BinaryStringToFloat(parts[i * cols + j]);
+            }
+        }
+
+        return matrix;
+    }
+
+    public static float[][] BinaryStringToMatrix(int rows, int cols, string encoded, int subStart)
+    {
 
         float[][] matrix = MatrixUtils.CreateMatrix2D(rows, cols);
 
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
-				int substringStart = (i * cols + j) * 32 + subStart;
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                int substringStart = (i * cols + j) * 32 + subStart;
                 matrix[i][j] = BinaryStringToFloat(encoded, substringStart, 32);
-			}
-		}
+            }
+        }
 
-		return matrix;
+        return matrix;
     }
 
-	public static float[] BinaryStringToFloatArray(string str) {
-		
-		if (str.Length % 32 != 0) {
-			throw new ArgumentException("Only binary strings are supported");
-		}
+    public static float[] BinaryStringToFloatArray(string str)
+    {
 
-		int floatCount = str.Length / 32;
-		float[] floats = new float[floatCount];
-		for (int i = 0; i < floatCount; i++) {
-			floats[i] = BinaryStringToFloat(str, i * 32, 32);
-		}
-		return floats;
-	}
+        if (str.Length % 32 != 0)
+        {
+            throw new ArgumentException("Only binary strings are supported");
+        }
 
-    public static float BinaryStringToFloat(string str) {
+        int floatCount = str.Length / 32;
+        float[] floats = new float[floatCount];
+        for (int i = 0; i < floatCount; i++)
+        {
+            floats[i] = BinaryStringToFloat(str, i * 32, 32);
+        }
+        return floats;
+    }
+    public static float[] BinaryStringToFloatArray(string str, int start, int size)
+    {
 
-		int numOfBytes = str.Length / 8;
-		byte[] bytes = new byte[numOfBytes];
+        if (str.Length % 32 != 0)
+        {
+            throw new ArgumentException("Only binary strings are supported");
+        }
 
-		for(int i = 0; i < numOfBytes; ++i)
-		{
-			bytes[i] = Convert.ToByte(str.Substring(8 * i, 8), 2);
-		}
+        int floatCount = size;
+        float[] floats = new float[floatCount];
+        for (int i = 0; i < floatCount; i++)
+        {
+            floats[i] = BinaryStringToFloat(str, start + i * 32, 32);
+        }
+        return floats;
+    }
 
-		return BitConverter.ToSingle(bytes, 0);
-	}
+    public static float BinaryStringToFloat(string str)
+    {
 
-    public static float BinaryStringToFloat(string str, int start, int length) {
+        int numOfBytes = str.Length / 8;
+        byte[] bytes = new byte[numOfBytes];
+
+        for (int i = 0; i < numOfBytes; ++i)
+        {
+            bytes[i] = Convert.ToByte(str.Substring(8 * i, 8), 2);
+        }
+
+        return BitConverter.ToSingle(bytes, 0);
+    }
+
+    public static float BinaryStringToFloat(string str, int start, int length)
+    {
         int numOfBytes = length / 8;
 
-		var bytes = byteStore;
+        var bytes = byteStore;
 
-		for (int i = 0; i < numOfBytes; ++i) {
+        for (int i = 0; i < numOfBytes; ++i)
+        {
 
-			byte result = 0;
+            byte result = 0;
 
-			int byteStart = start + i * 8;
-			int byteEnd = byteStart + 7;
+            int byteStart = start + i * 8;
+            int byteEnd = byteStart + 7;
 
-			for (int c = byteEnd; c >= byteStart; c--) {
+            for (int c = byteEnd; c >= byteStart; c--)
+            {
 
-				result += (str[c] == '0') ? (byte)0 : (byte)(Pow2Byte(byteEnd - c));
-			}
+                result += (str[c] == '0') ? (byte)0 : (byte)(Pow2Byte(byteEnd - c));
+            }
 
-			bytes[i] = result;
-		}
+            bytes[i] = result;
+        }
 
-		return BitConverter.ToSingle(bytes, 0);
+        return BitConverter.ToSingle(bytes, 0);
     }
 
-    private static byte Pow2Byte(int exp) {
-	
-		switch (exp) {
-		case 0:
-			return 1;
-		case 1:
-			return 2;
-		case 2:
-			return 4;
-		case 3:
-			return 8;
-		case 4:
-			return 16;
-		case 5:
-			return 32;
-		case 6:
-			return 64;
-		case 7:
-			return 128;
-		default:
-			throw new Exception("Optimization not implemented for given exponent " + exp);
-		}
-	}
+    private static byte Pow2Byte(int exp)
+    {
 
-    private static class Tests {
+        switch (exp)
+        {
+            case 0:
+                return 1;
+            case 1:
+                return 2;
+            case 2:
+                return 4;
+            case 3:
+                return 8;
+            case 4:
+                return 16;
+            case 5:
+                return 32;
+            case 6:
+                return 64;
+            case 7:
+                return 128;
+            default:
+                throw new Exception("Optimization not implemented for given exponent " + exp);
+        }
+    }
 
-        public static void FloatFromBinaryStringTest() {
+    private static class Tests
+    {
+
+        public static void FloatFromBinaryStringTest()
+        {
 
             int numberOfTests = 10;
 
-            for (int i = 0; i < numberOfTests; i++) {
+            for (int i = 0; i < numberOfTests; i++)
+            {
 
                 float randFloat = UnityEngine.Random.Range(-5f, 5f);
                 string floatStr = FloatToString(randFloat);
@@ -184,11 +231,13 @@ public static class ConversionUtils {
             }
         }
 
-        public static void StringFromFloatTest() {
+        public static void StringFromFloatTest()
+        {
 
             int numberOfTests = 10;
 
-            for (int i = 0; i < numberOfTests; i++) {
+            for (int i = 0; i < numberOfTests; i++)
+            {
 
                 float randFloat = UnityEngine.Random.Range(-5f, 5f);
 

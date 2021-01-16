@@ -4,9 +4,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using Keiwando.UI;
 
-namespace Keiwando.Evolution.UI {
+namespace Keiwando.Evolution.UI
+{
 
-    public interface IBasicSettingsViewDelegate {
+    public interface IBasicSettingsViewDelegate
+    {
 
         int GetPopulationSize();
         int GetGenerationDuration();
@@ -17,7 +19,8 @@ namespace Keiwando.Evolution.UI {
         void ObjectiveDidChange(Objective objective);
     }
 
-    public class BasicSettingsView: MonoBehaviour {
+    public class BasicSettingsView : MonoBehaviour
+    {
 
         public IBasicSettingsViewDelegate Delegate { get; set; }
 
@@ -27,7 +30,8 @@ namespace Keiwando.Evolution.UI {
 
         private Dropdown<int> dropdownWrapper;
 
-        void Start() {
+        void Start()
+        {
 
             var dropdownData = new List<Dropdown<int>.Data> {
                 new Dropdown<int>.Data() {
@@ -45,34 +49,44 @@ namespace Keiwando.Evolution.UI {
                 new Dropdown<int>.Data() {
                     Value = (int)Objective.Climbing,
                     Label = "Climbing"
+                },
+                new Dropdown<int>.Data() {
+                    Value = (int)Objective.Laser,
+                    Label = "Laser"
                 }
             };
-            
+
             var taskDropdown = new Dropdown<int>(this.taskDropdown, dropdownData);
-            taskDropdown.onValueChanged += delegate (int value) {
+            taskDropdown.onValueChanged += delegate (int value)
+            {
                 var objective = (Objective)value;
                 Delegate?.ObjectiveDidChange(objective);
             };
             this.dropdownWrapper = taskDropdown;
 
-            populationSizeInput.onEndEdit.AddListener(delegate (string value) {
+            populationSizeInput.onEndEdit.AddListener(delegate (string value)
+            {
                 int populationSize = 0;
-                if (int.TryParse(value, out populationSize)) {
+                if (int.TryParse(value, out populationSize))
+                {
                     Delegate?.PopulationSizeDidChange(populationSize);
                 }
                 Refresh();
             });
 
-            generationDurationInput.onEndEdit.AddListener(delegate (string value) {
+            generationDurationInput.onEndEdit.AddListener(delegate (string value)
+            {
                 int duration = 0;
-                if (int.TryParse(value, out duration)) {
+                if (int.TryParse(value, out duration))
+                {
                     Delegate?.SimulationTimeDidChange(duration);
                 }
                 Refresh();
             });
         }
 
-        public void Refresh() {
+        public void Refresh()
+        {
 
             if (Delegate == null) return;
 

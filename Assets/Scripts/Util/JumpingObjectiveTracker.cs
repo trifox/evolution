@@ -1,21 +1,24 @@
 using UnityEngine;
 
-namespace Keiwando.Evolution {
+namespace Keiwando.Evolution
+{
 
     // Jump as high as possible ()
 
-    public class JumpingObjectiveTracker: ObjectiveTracker {
+    public class JumpingObjectiveTracker : ObjectiveTracker
+    {
 
         /// <summary>
         /// The optimal distance a "perfect" creature could travel in 10 seconds.
         /// Quite arbitrarily chosen.
         /// </summary> 
-	    private const float MAX_HEIGHT = 20f;
+	    private const float MAX_HEIGHT = 50f;
 
         private float maxHeightJumped = 0f;
         private float maxWeightedAverageHeight = 0f;
 
-        void FixedUpdate() {
+        void FixedUpdate()
+        {
 
             float distanceFromGround = creature.DistanceFromGround();
 
@@ -24,7 +27,9 @@ namespace Keiwando.Evolution {
             this.maxWeightedAverageHeight = Mathf.Max((4 * distanceFromGround + maxHeight) / 5, maxWeightedAverageHeight);
         }
 
-        public override float EvaluateFitness(float simulationTime) {
+        public override float EvaluateFitness(float simulationTime)
+        {
+            //return maxHeightJumped / MAX_HEIGHT;
             return maxWeightedAverageHeight / MAX_HEIGHT;
         }
 

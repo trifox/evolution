@@ -4,25 +4,26 @@ using System.IO;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Callbacks;
-using UnityEditor.iOS.Xcode;
+public class iOSPostProcess : MonoBehaviour
+{
 
-public class iOSPostProcess : MonoBehaviour {
-    
     [PostProcessBuild(2)]
-    public static void OnPostProcessingBuild(BuildTarget target, string path) {
+    public static void OnPostProcessingBuild(BuildTarget target, string path)
+    {
 
-        if (target != BuildTarget.iOS) return;
+        // if (target != BuildTarget.iOS) return;
 
-        var plistPath = Path.Combine(path, "Info.plist");
-		var plist = new PlistDocument();
-		plist.ReadFromFile(plistPath);
-        var rootDict = plist.root;
+        // var plistPath = Path.Combine(path, "Info.plist");
+        // var plist = new PlistDocument();
+        // plist.ReadFromFile(plistPath);
+        // var rootDict = plist.root;
 
-        var existsOnSuspendKey = "UIApplicationExitsOnSuspend";
-        if (rootDict.values.ContainsKey(existsOnSuspendKey)) {
-            rootDict.values.Remove(existsOnSuspendKey);
-        }
+        // var existsOnSuspendKey = "UIApplicationExitsOnSuspend";
+        // if (rootDict.values.ContainsKey(existsOnSuspendKey))
+        // {
+        //     rootDict.values.Remove(existsOnSuspendKey);
+        // }
 
-        plist.WriteToFile(plistPath);
+        // plist.WriteToFile(plistPath);
     }
 }

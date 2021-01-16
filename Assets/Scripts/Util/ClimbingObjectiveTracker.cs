@@ -12,7 +12,7 @@ namespace Keiwando.Evolution {
             var maxHeight = MAX_HEIGHT * simulationTime / 10f;
             var verticalDistanceFromSpawn = creature.GetYPosition() - creature.InitialPosition.y;
             
-            return (verticalDistanceFromSpawn / maxHeight) + 0.5f;
+            return FeedForwardNetwork.Sigmoid(verticalDistanceFromSpawn);
         }
     }
 }

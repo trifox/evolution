@@ -4,16 +4,17 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
-public interface IBestCreaturesOverlayViewDelegate {
+public interface IBestCreaturesOverlayViewDelegate
+{
 
     void SelectedGeneration(BestCreaturesOverlayView view, int generation);
     void DidChangeAutoplayEnabled(BestCreaturesOverlayView view, bool enabled);
     void DidChangeAutoplayDuration(BestCreaturesOverlayView view, int duration);
     void DidClickOnPipView(BestCreaturesOverlayView view);
-    
+
     bool IsAutoplayEnabled(BestCreaturesOverlayView view);
     int GetAutoplayDuration(BestCreaturesOverlayView view);
-    
+
     int GetCurrentSimulationGeneration(BestCreaturesOverlayView view);
     int GetGenerationOfCurrentBest(BestCreaturesOverlayView view);
     CreatureStats GetCreatureStatsOfCurrentBest(BestCreaturesOverlayView view);
@@ -22,7 +23,8 @@ public interface IBestCreaturesOverlayViewDelegate {
     int GetNumberOfNetworkOutputs(BestCreaturesOverlayView view);
 }
 
-public class BestCreaturesOverlayView: MonoBehaviour {
+public class BestCreaturesOverlayView : MonoBehaviour
+{
 
     public IBestCreaturesOverlayViewDelegate Delegate { get; set; }
 
@@ -60,47 +62,58 @@ public class BestCreaturesOverlayView: MonoBehaviour {
     // Animation
     private Coroutine errorFadeRoutine;
 
-    void Start() {
+    void Start()
+    {
 
-        generationInputField.onEndEdit.AddListener(delegate (string val) {
+        generationInputField.onEndEdit.AddListener(delegate (string val)
+        {
             int generation = 0;
-            if (int.TryParse(val, out generation)) {
+            if (int.TryParse(val, out generation))
+            {
                 Delegate.SelectedGeneration(this, generation);
-            } else {
+            }
+            else
+            {
                 generationInputField.text = Delegate.GetGenerationOfCurrentBest(this).ToString();
             }
             Refresh();
         });
 
-        showPreviousGenerationButton.onClick.AddListener(delegate () {
+        showPreviousGenerationButton.onClick.AddListener(delegate ()
+        {
             int newGeneration = Math.Max(0, Delegate.GetGenerationOfCurrentBest(this) - 1);
             Delegate.SelectedGeneration(this, newGeneration);
             Refresh();
         });
 
-        showNextGenerationButton.onClick.AddListener(delegate () {
+        showNextGenerationButton.onClick.AddListener(delegate ()
+        {
             int newGeneration = Delegate.GetGenerationOfCurrentBest(this) + 1;
             Delegate.SelectedGeneration(this, newGeneration);
             Refresh();
         });
 
-        autoplayToggle.onValueChanged.AddListener(delegate (bool enabled) {
+        autoplayToggle.onValueChanged.AddListener(delegate (bool enabled)
+        {
             Delegate.DidChangeAutoplayEnabled(this, enabled);
             Refresh();
         });
 
-        autoplayDurationSlider.onValueChanged.AddListener(delegate (float value) {
+        autoplayDurationSlider.onValueChanged.AddListener(delegate (float value)
+        {
             int newDuration = Math.Max(2, (int)value);
             Delegate.DidChangeAutoplayDuration(this, newDuration);
             RefreshAutoplayDurationLabel();
         });
 
-        pipButton.onClick.AddListener(delegate () {
+        pipButton.onClick.AddListener(delegate ()
+        {
             Delegate.DidClickOnPipView(this);
         });
     }
 
-    public void Refresh() {
+    public void Refresh()
+    {
 
         int generation = Delegate.GetGenerationOfCurrentBest(this);
         generationInputField.text = generation.ToString();
@@ -114,18 +127,21 @@ public class BestCreaturesOverlayView: MonoBehaviour {
         RefreshAutoplayDurationLabel();
     }
 
-    private void RefreshAutoplayDurationLabel() {
+    private void RefreshAutoplayDurationLabel()
+    {
         autoplayDurationLabel.text = string.Format("Duration {0}s", Delegate.GetAutoplayDuration(this));
     }
 
-    private void RefreshStats() {
+    private void RefreshStats()
+    {
 
         var stats = Delegate.GetCreatureStatsOfCurrentBest(this);
         // var fitnessPercentage = Mathf.Round(stats.fitness * 10000f) / 100f;
         var fitnessPercentage = Mathf.Round(stats.fitness * 1000f) / 10f;
         fitnessLabel.text = string.Format("Fitness: {0}%", fitnessPercentage);
 
-        if (stats.simulationTime <= 0) {
+        if (stats.simulationTime <= 0)
+        {
             // This is an old simulation save where advanced stats hadn't been tracked yet.
             statsLabel.text = "";
             return;
@@ -157,7 +173,8 @@ public class BestCreaturesOverlayView: MonoBehaviour {
         var layersStringBuilder = new StringBuilder();
         layersStringBuilder.Append(numberOfInputs);
         layersStringBuilder.Append(" + ");
-        foreach (var layerNodeCount in networkStats.NodesPerIntermediateLayer) {
+        foreach (var layerNodeCount in networkStats.getLayerSizes())
+        {
             numberOfNodes += layerNodeCount;
             layersStringBuilder.Append(layerNodeCount);
             layersStringBuilder.Append(" + ");
@@ -173,19 +190,23 @@ public class BestCreaturesOverlayView: MonoBehaviour {
         statsLabel.text = stringBuilder.ToString();
     }
 
-    private void RefreshPipGenerationLabel() {
-        
+    private void RefreshPipGenerationLabel()
+    {
+
         int generation = Delegate.GetCurrentSimulationGeneration(this);
         pipGenerationLabel.text = string.Format("Generation {0}", generation);
     }
 
-    public RenderTexture GetPipRenderTexture() {
+    public RenderTexture GetPipRenderTexture()
+    {
         return pipRenderTexture;
     }
 
-    public void ShowErrorMessage(string message) {
+    public void ShowErrorMessage(string message)
+    {
 
-        if (errorFadeRoutine != null) {
+        if (errorFadeRoutine != null)
+        {
             StopCoroutine(errorFadeRoutine);
         }
 
@@ -198,9 +219,11 @@ public class BestCreaturesOverlayView: MonoBehaviour {
     /// <summary>
     /// Immediately ends all fading animations and hides the error message label.
     /// </summary>
-    public void HideErrorMessage() {
+    public void HideErrorMessage()
+    {
 
-        if (errorFadeRoutine != null) {
+        if (errorFadeRoutine != null)
+        {
             StopCoroutine(errorFadeRoutine);
         }
         errorLabel.GetComponent<CanvasGroup>().alpha = 0f;

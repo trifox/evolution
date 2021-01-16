@@ -1,10 +1,12 @@
 using Keiwando.JSON;
 
-namespace Keiwando.Evolution.Scenes {
+namespace Keiwando.Evolution.Scenes
+{
 
-    public class ScenePhysicsConfiguration: IJsonConvertible {
+    public class ScenePhysicsConfiguration : IJsonConvertible
+    {
 
-        public float Gravity { get; set; } = -50f;
+        public float Gravity { get; set; } = -100f;
 
         /// <summary>
         /// Set a velocity value. If two colliding objects have a relative 
@@ -72,7 +74,8 @@ namespace Keiwando.Evolution.Scenes {
 
         #region Encode & Decode
 
-        private static class CodingKey {
+        private static class CodingKey
+        {
             public const string Gravity = "gravity";
             public const string BounceThreshold = "bounceThreshold";
             public const string SleepThreshold = "sleepThreshold";
@@ -84,7 +87,8 @@ namespace Keiwando.Evolution.Scenes {
             public const string AutoSyncTransforms = "autoSyncTransforms";
         }
 
-        public JObject Encode() {
+        public JObject Encode()
+        {
 
             var json = new JObject();
             json[CodingKey.Gravity] = this.Gravity;
@@ -99,11 +103,13 @@ namespace Keiwando.Evolution.Scenes {
             return json;
         }
 
-        public static ScenePhysicsConfiguration Decode(JObject json) {
+        public static ScenePhysicsConfiguration Decode(JObject json)
+        {
 
             var autoSyncTransforms = json.ContainsKey(CodingKey.AutoSyncTransforms) ? json[CodingKey.AutoSyncTransforms].ToBool() : false;
 
-            return new ScenePhysicsConfiguration {
+            return new ScenePhysicsConfiguration
+            {
                 Gravity = json[CodingKey.Gravity].ToFloat(),
                 BounceThreshold = json[CodingKey.BounceThreshold].ToFloat(),
                 SleepThreshold = json[CodingKey.SleepThreshold].ToFloat(),
@@ -118,7 +124,8 @@ namespace Keiwando.Evolution.Scenes {
 
         #endregion
 
-        public static ScenePhysicsConfiguration Legacy = new ScenePhysicsConfiguration() {
+        public static ScenePhysicsConfiguration Legacy = new ScenePhysicsConfiguration()
+        {
             Gravity = -50f,
             BounceThreshold = 2f,
             SleepThreshold = 0.005f,

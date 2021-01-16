@@ -5,8 +5,8 @@ namespace Keiwando.Evolution {
 
 	public class ClimbingBrain : Brain {
 
-		public const int NUMBER_OF_INPUTS = 6;
-		public override int NumberOfInputs => NUMBER_OF_INPUTS;
+		public const int NUMBER_OF_INPUTS = 7;
+		public override int NumberOfInputs => NUMBER_OF_INPUTS+7;
 
 		/*Inputs:
 		* 
@@ -32,6 +32,26 @@ namespace Keiwando.Evolution {
 			Network.Inputs[4] = creature.GetNumberOfPointsTouchingGround();
 			// Creature rotation
 			Network.Inputs[5] = creature.GetRotation();
+
+			     Network.Inputs[6] = Mathf.Sin(Time.time * Mathf.PI * 2);
+            int index = 0;
+            Vector3 centerOfMass = Vector3.zero;
+            foreach (Joint joint in creature.joints)
+            {
+                centerOfMass += joint.center;
+
+            }
+            centerOfMass /= creature.joints.Count;
+
+            foreach (Joint joint in creature.joints)
+            {
+                // Debug.Log("Joint" + (joint.center - velocity).magnitude);
+                // Debug.Log("Joint" + (joint.center - velocity).magnitude);
+                // Debug.Log("Joint" + (joint.center - velocity).magnitude);
+                // Debug.Log("Joint" + (joint.center - velocity).magnitude);
+
+                Network.Inputs[NUMBER_OF_INPUTS + index++] = (joint.center - centerOfMass).magnitude;
+            }
 		}
 	}
 

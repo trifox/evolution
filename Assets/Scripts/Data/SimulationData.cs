@@ -5,10 +5,12 @@ using UnityEngine;
 using Keiwando.JSON;
 using Keiwando.Evolution.Scenes;
 
-namespace Keiwando.Evolution {
+namespace Keiwando.Evolution
+{
 
     [Serializable]
-    public class SimulationData {
+    public class SimulationData
+    {
 
         public int Version { get; private set; } = 3;
 
@@ -23,11 +25,12 @@ namespace Keiwando.Evolution {
         public readonly int LastV2SimulatedGeneration;
 
         public SimulationData(
-            SimulationSettings settings, 
-            NeuralNetworkSettings networkSettings, 
-            CreatureDesign design, 
+            SimulationSettings settings,
+            NeuralNetworkSettings networkSettings,
+            CreatureDesign design,
             SimulationSceneDescription sceneDescription
-        ) {
+        )
+        {
             this.Settings = settings;
             this.NetworkSettings = networkSettings;
             this.CreatureDesign = design;
@@ -38,14 +41,15 @@ namespace Keiwando.Evolution {
         }
 
         public SimulationData(
-            SimulationSettings settings, 
-            NeuralNetworkSettings networkSettings, 
+            SimulationSettings settings,
+            NeuralNetworkSettings networkSettings,
             CreatureDesign design,
             SimulationSceneDescription sceneDescription,
-            List<ChromosomeData> bestCreatures, 
+            List<ChromosomeData> bestCreatures,
             float[][] currentChromosomes,
             int lastV2SimulatedGeneration = 0
-        ): this(settings, networkSettings, design, sceneDescription) {
+        ) : this(settings, networkSettings, design, sceneDescription)
+        {
             this.BestCreatures = bestCreatures;
             this.CurrentChromosomes = currentChromosomes;
             this.LastV2SimulatedGeneration = lastV2SimulatedGeneration;
@@ -53,7 +57,8 @@ namespace Keiwando.Evolution {
 
         #region Encode & Decode
 
-        private static class CodingKey {
+        private static class CodingKey
+        {
             public const string Version = "version";
             public const string Settings = "simulationSettings";
             public const string NetworkSettings = "networkSettings";
@@ -64,10 +69,11 @@ namespace Keiwando.Evolution {
             public const string LastV2SimulatedGeneration = "lastV2SimulationGeneration";
         }
 
-        public JObject Encode() {
+        public JObject Encode()
+        {
 
             JObject json = new JObject();
-            
+
             json[CodingKey.Version] = this.Version;
             json[CodingKey.Settings] = this.Settings.Encode();
             json[CodingKey.NetworkSettings] = this.NetworkSettings.Encode();
@@ -75,7 +81,8 @@ namespace Keiwando.Evolution {
             json[CodingKey.SceneDescription] = this.SceneDescription.Encode();
             json[CodingKey.BestCreatures] = JArray.From(this.BestCreatures);
             var chromosomeTokens = new JToken[this.CurrentChromosomes.Length];
-            for (int i = 0; i < chromosomeTokens.Length; i++) {
+            for (int i = 0; i < chromosomeTokens.Length; i++)
+            {
                 chromosomeTokens[i] = new JArray(this.CurrentChromosomes[i]);
             }
             json[CodingKey.CurrentChromosomes] = new JArray(chromosomeTokens);
@@ -84,15 +91,18 @@ namespace Keiwando.Evolution {
             return json;
         }
 
-        public static SimulationData Decode(string encoded) {
-            return Decode(JObject.Parse(encoded));   
+        public static SimulationData Decode(string encoded)
+        {
+            return Decode(JObject.Parse(encoded));
         }
 
-        public static SimulationData Decode(JObject json) {
+        public static SimulationData Decode(JObject json)
+        {
 
             var encodedCurrentChromosomes = json[CodingKey.CurrentChromosomes].ToArray();
             var currentChromosomes = new float[encodedCurrentChromosomes.Length][];
-            for (int i = 0; i < currentChromosomes.Length; i++) {
+            for (int i = 0; i < currentChromosomes.Length; i++)
+            {
                 currentChromosomes[i] = encodedCurrentChromosomes[i].ToFloatArray();
             }
 

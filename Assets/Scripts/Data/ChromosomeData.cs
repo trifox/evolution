@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Keiwando.JSON;
-
+using UnityEngine;
 namespace Keiwando.Evolution {
 
     [Serializable]
@@ -12,6 +12,7 @@ namespace Keiwando.Evolution {
 
         public ChromosomeData(float[] chromosome, CreatureStats stats) {
             this.Chromosome = chromosome;
+            Debug.Log("ChromosomeData"+String.Join(",",Chromosome) );
             this.Stats = stats;
         } 
 
